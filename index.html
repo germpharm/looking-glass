@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Anti-Bee</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #fafafa;
+            --surface: #fff;
+            --black: #0a0a0a;
+            --dark: #1a1a1a;
+            --mid: #666;
+            --light: #999;
+            --faint: #e0e0e0;
+            --forbidden: #dc2626;
+            --forbidden-bg: #fef2f2;
+            --success: #16a34a;
+            --gold: #ca8a04;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .game {
+            max-width: 460px;
+            width: 100%;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* Header */
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .title span {
+            color: var(--forbidden);
+            text-decoration: line-through;
+            text-decoration-thickness: 2px;
+        }
+
+        .score-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--mid);
+        }
+
+        .score-display b {
+            color: var(--black);
+            font-weight: 700;
+        }
+
+        /* Progress */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--faint);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--black);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .progress-label {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--light);
+        }
+
+        /* Message */
+        .message {
+            height: 28px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+        }
+
+        .message.success { color: var(--success); }
+        .message.error { color: var(--forbidden); }
+        .message.pangram { color: var(--gold); font-weight: 700; }
+
+        /* Input display */
+        .input-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .input-display .letter {
+            transition: transform 0.1s;
+        }
+
+        .input-display .letter.forbidden-letter {
+            color: var(--forbidden);
+            text-decoration: line-through;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 32px;
+            background: var(--black);
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* Honeycomb */
+        .honeycomb {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .hex-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .hex {
+            width: 68px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: var(--surface);
+            border: 2px solid var(--faint);
+            border-radius: 12px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s, background 0.15s, border-color 0.15s;
+        }
+
+        .hex:active {
+            transform: scale(0.92);
+        }
+
+        .hex:hover {
+            border-color: var(--light);
+        }
+
+        .hex.center {
+            background: var(--forbidden-bg);
+            border-color: var(--forbidden);
+            color: var(--forbidden);
+            position: relative;
+        }
+
+        .hex.center::after {
+            content: '';
+            position: absolute;
+            width: 36px;
+            height: 2px;
+            background: var(--forbidden);
+            transform: rotate(-12deg);
+            opacity: 0.6;
+        }
+
+        /* Buttons */
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid var(--faint);
+            background: var(--surface);
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn:hover {
+            border-color: var(--light);
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn.primary {
+            background: var(--black);
+            color: var(--surface);
+            border-color: var(--black);
+        }
+
+        .btn.primary:hover {
+            background: var(--dark);
+        }
+
+        /* Found words */
+        .found-section {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .found-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--faint);
+        }
+
+        .found-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--light);
+        }
+
+        .found-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--light);
+        }
+
+        .found-words {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .found-word {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            padding: 4px 10px;
+            background: var(--surface);
+            border: 1px solid var(--faint);
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .found-word.pangram {
+            background: #fefce8;
+            border-color: var(--gold);
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        /* Rules toggle */
+        .rules-toggle {
+            font-size: 12px;
+            color: var(--light);
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: 'Inter', sans-serif;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .rules {
+            width: 100%;
+            font-size: 13px;
+            color: var(--mid);
+            line-height: 1.7;
+            padding: 16px;
+            background: var(--surface);
+            border: 1px solid var(--faint);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .rules.open { display: block; }
+
+        .rules p { margin-bottom: 8px; }
+        .rules p:last-child { margin-bottom: 0; }
+        .rules strong { color: var(--dark); }
+        .rules .forbidden-text { color: var(--forbidden); font-weight: 600; }
+
+        /* New puzzle */
+        .new-puzzle {
+            margin-top: 8px;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 16px;
+            font-size: 11px;
+            color: var(--light);
+            text-align: center;
+        }
+
+        .footer a {
+            color: var(--mid);
+            text-decoration: none;
+        }
+
+        @media (max-width: 380px) {
+            .hex {
+                width: 58px;
+                height: 58px;
+                font-size: 20px;
+            }
+            .input-display {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game">
+        <div class="header">
+            <div class="title">Anti-<span>B</span>ee</div>
+            <div class="score-display">Score: <b id="score">0</b></div>
+        </div>
+
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <div class="progress-label">
+            <span id="found-label">0 found</span>
+            <span id="total-label">0 words</span>
+        </div>
+
+        <div class="message" id="message">&nbsp;</div>
+
+        <div class="input-display" id="input"><span class="cursor"></span></div>
+
+        <div class="honeycomb" id="honeycomb"></div>
+
+        <div class="controls">
+            <button class="btn" id="shuffle-btn">Shuffle</button>
+            <button class="btn" id="delete-btn">Delete</button>
+            <button class="btn primary" id="enter-btn">Enter</button>
+        </div>
+
+        <div class="found-section">
+            <div class="found-header">
+                <span class="found-title">Found words</span>
+                <span class="found-count" id="found-count"></span>
+            </div>
+            <div class="found-words" id="found-words"></div>
+        </div>
+
+        <button class="rules-toggle" id="rules-toggle">How to play</button>
+        <div class="rules" id="rules">
+            <p><strong>The opposite of Spelling Bee.</strong></p>
+            <p>Make words using the outer letters. The <span class="forbidden-text">center letter is forbidden</span>. You cannot use it.</p>
+            <p>Words must be <strong>4+ letters</strong>. Letters can be reused. Every word in the dictionary counts.</p>
+            <p><strong>Scoring:</strong> 4 letters = 1 point. 5+ letters = 1 point per letter. Pangram (all 6 outer letters) = +7 bonus.</p>
+        </div>
+
+        <button class="btn new-puzzle" id="new-puzzle-btn">New Puzzle</button>
+
+        <div class="footer">
+            Through the looking glass. Same game, exact opposite objective.<br>
+            <a href="https://germpharm.org">GermPharm</a>
+        </div>
+    </div>
+
+    <script>
+    const PUZZLES = [{"letters":["z","y","o","p","d","b"],"center":"i","answers":["bobby","bobo","body","boob","booby","bood","boody","boozy","bozo","dobby","doby","dodd","doddy","dodo","doob","dozy","oopod","oozy","pobby","poddy","poop","poppy","yoop","zobo","zoozoo"],"pangrams":[],"count":25},{"letters":["n","o","k","q","s","d"],"center":"r","answers":["dodd","dodo","dook","doon","doss","koko","kokoon","nondo","nook","noon","odds","odso","onkos","oons","skoo","snod","snood","snook","sond","sonk","sons","sook","soon","soso","soss"],"pangrams":[],"count":25},{"letters":["v","n","r","f","o","d"],"center":"i","answers":["dodd","dodo","doff","donor","doon","door","dorn","fond","fono","food","ford","fordo","frond","nondo","nonfood","noon","odor","oord","rodd","rond","rondo","rood","roof","roon","voodoo"],"pangrams":[],"count":25},{"letters":["x","q","v","a","l","e"],"center":"n","answers":["alala","alee","allele","aval","axal","axle","eave","elle","exlex","lall","lava","lave","leal","leave","levee","level","vale","vall","valva","valval","valve","veal","vela","velal","vell","vellala"],"pangrams":[],"count":26},{"letters":["z","n","v","f","o","e"],"center":"l","answers":["enfeoff","enzone","eozoon","even","evoe","evzone","feeze","feoff","feoffee","fono","neeze","neon","neve","nevo","none","nonene","noon","novene","ooze","oven","ozone","veen","venene","zone","zoon","zoozoo"],"pangrams":[],"count":26},{"letters":["c","e","x","r","j","o"],"center":"a","answers":["cere","cerer","cero","cerrero","cocco","coco","coerce","coercer","cooee","cooer","cooree","core","corer","cree","croc","crore","ejoo","error","jeer","jeerer","joree","oxer","recce","recco","reree","rococo","roer"],"pangrams":[],"count":27},{"letters":["y","o","r","k","h","s"],"center":"a","answers":["hook","hooky","hoosh","horror","horsy","hory","koko","ohoy","roky","rook","rooky","rory","ross","rosy","shoo","shook","shoor","shor","skoo","soho","sook","sooky","sorry","sory","sosh","soso","soss","yoky","yook","york"],"pangrams":[],"count":30},{"letters":["u","w","h","e","n","o"],"center":"t","answers":["eheu","enow","hewn","hone","hoon","howe","hunh","neon","nohow","none","nonene","noon","noun","nowhen","onehow","unhewn","unnew","unown","unwon","ween","weewow","wene","whee","wheen","when","whew","whone","whoo","whun","wone","woohoo","woon"],"pangrams":[],"count":32},{"letters":["h","a","n","j","g","b"],"center":"r","answers":["agha","ajaja","anan","anana","anba","anhang","anjan","anna","baba","baga","bahan","bajan","banaba","banana","bang","banga","bhang","gabgab","gang","ganga","gangan","ganggang","ganja","haab","habnab","hanna","jann","naga","nagana","nagnag","nana","nanga"],"pangrams":[],"count":32},{"letters":["i","n","s","m","u","z"],"center":"r","answers":["immi","minim","minimism","minimum","minimus","minium","minus","miss","missis","muss","muzz","nisus","numinism","nummi","nummus","nunni","simsim","sinus","sisi","siss","sizz","snum","sunn","susi","susu","suum","uninn","unsin","unsun","zimmi","zimmis","zizz","zuisin"],"pangrams":[],"count":33},{"letters":["l","i","n","b","y","r"],"center":"e","answers":["bibb","bibi","bibiri","bilby","bill","billy","biri","birl","birlinn","birn","birny","birr","brill","brin","briny","illy","inby","inly","liin","lill","lily","linin","linn","liny","llyn","nibby","ninny","ribby","rill","rilly","yill","yirn","yirr"],"pangrams":[],"count":33},{"letters":["p","b","a","x","r","m"],"center":"t","answers":["amapa","amar","amba","ambar","amma","amra","apar","araba","arar","arara","arba","baar","baba","bara","barabara","barb","barm","barra","brab","maam","mamba","mamma","marara","marm","paar","papa","para","param","parma","parr","praam","pram","ramarama","ramp"],"pangrams":[],"count":34},{"letters":["b","l","v","p","a","d"],"center":"t","answers":["abdal","adad","adda","alada","alala","alba","appall","aval","baal","baba","bald","ball","ballad","blab","blad","dabb","dabba","dada","dadap","labba","lablab","lall","lava","paal","pall","palla","pallall","palp","palpal","papa","papal","plap","vall","valva","valval"],"pangrams":[],"count":35},{"letters":["t","h","e","l","q","y"],"center":"n","answers":["eely","elle","ethel","ethyl","ettle","eyelet","eyey","heel","hele","hell","helly","hyle","leet","lete","teel","teet","teeth","teethe","teethy","teety","tele","tell","tellee","tellt","telt","tete","tetel","teth","thee","theet","they","theyll","tyee","yeel","yell","yelt","yeth"],"pangrams":[],"count":37},{"letters":["l","p","s","t","v","i"],"center":"o","answers":["ipil","lill","lilt","lisp","liss","list","piitis","pili","pill","pipi","pipit","piss","pist","pistil","pitpit","sill","silt","sisi","siss","sist","slip","slit","spill","spilt","spit","spiv","split","still","stilt","till","tilt","tipiti","tiptilt","titi","titlist","vill","villitis","visit"],"pangrams":[],"count":38},{"letters":["c","s","o","d","u","g"],"center":"n","answers":["cocco","coccous","coccus","coco","codo","coss","couscous","couscousou","cuscus","cuss","cusso","dodd","dodo","doggo","dogs","doss","douc","dugdug","gogo","good","goods","gugu","guss","odds","odso","scog","scud","scudo","scug","soco","soso","soss","soud","succous","succuss","sudd","suds","susu"],"pangrams":[],"count":38},{"letters":["k","b","l","r","i","u"],"center":"a","answers":["bibb","bibi","bibiri","bilk","bill","biri","birk","birl","birr","blub","blur","blurb","brill","bulb","bulbil","bulbul","bulk","bull","buri","burl","burr","kiki","kiku","kill","kiri","kirk","kukri","kuku","kukui","lill","lull","lulu","lurk","rikk","rill","rull","ruru","ululu","urubu"],"pangrams":[],"count":39},{"letters":["z","i","l","b","e","y"],"center":"a","answers":["belee","belibel","belie","bell","belle","belly","bely","bezel","bezzi","bezzle","bibb","bibble","bibi","bilbie","bilby","bile","bill","billy","bizz","bleb","blebby","blee","bleeze","bleezy","blibe","blizz","byee","eely","elle","eyey","illy","izle","libel","libelee","lile","lill","lily","yeel","yell","yezzy","yill","zizz"],"pangrams":[],"count":42},{"letters":["j","u","y","t","e","s"],"center":"n","answers":["estus","eyey","jess","jest","jestee","jete","jetty","juju","just","jute","jutty","seesee","sess","sestet","sett","settee","stet","stey","stue","stuss","stut","suet","suety","susu","suttee","teest","teet","teety","teju","test","teste","testee","testes","testy","tete","tsetse","tute","tutee","tuts","tutty","tutu","tyee","tyste","usee","utees","yees","yese","yest","yesty","yutu"],"pangrams":[],"count":50},{"letters":["a","n","w","d","y","u"],"center":"i","answers":["adad","adaw","adawn","aday","adda","anan","anana","ananda","anay","anda","anna","anyway","away","awny","dada","daddy","dand","danda","dandy","daud","dauw","dawdy","dawn","dawny","daydawn","duad","dunny","duny","dyad","nana","nandu","nanny","unadd","unau","unaway","undy","unwan","waddy","wadna","wand","wandy","wanny","wany","wawa","wudu","wunna","wynd","wynn","yaud","yawn","yawny","yawy","yaya","yday","yuan"],"pangrams":[],"count":55},{"letters":["i","s","p","h","u","m"],"center":"l","answers":["himp","hippish","hippus","hish","hiss","humhum","hump","humph","humus","hush","huss","immi","impi","impish","impship","imshi","mimp","miss","missis","missish","mump","mumpish","mumps","mumpsimus","mush","muss","pimp","pimpish","pimpship","pipi","pish","pishu","piss","pump","push","puss","shih","shim","ship","shish","shush","simp","simsim","sish","sisi","siss","smush","sump","sumph","sumphish","sumpsimus","susi","susu","suum","umph","uppish","uppush","upsup"],"pangrams":["mumpish","sumphish"],"count":58},{"letters":["w","y","s","a","i","b"],"center":"l","answers":["abas","abasia","abbas","abbasi","abbassi","abwab","abyss","assai","assay","assbaa","assi","assis","asway","awabi","away","awiwi","baba","babai","babby","baby","basis","bass","baya","bias","bibb","bibi","biwa","byway","ibis","iiwi","isba","iwaiwa","iwis","sasa","sass","sassaby","sassy","sawbwa","sawway","saya","sibby","sisi","siss","sissy","swab","sway","swiss","wabby","wasabi","wawa","ways","wiss","wyss","yaba","yabbi","yabby","yaws","yawy","yaya"],"pangrams":[],"count":59},{"letters":["n","a","z","o","b","d"],"center":"r","answers":["abandon","aboon","adad","adda","anabo","anan","anana","ananda","anba","anda","anna","annona","anoa","anon","azon","baba","baboo","baboon","badan","banaba","banana","band","banda","bandanna","bando","baobab","bazoo","boba","bobo","bonanza","bonbon","bond","bonnaz","boob","bood","boon","boza","bozo","dabb","dabba","dada","dado","dand","danda","doab","dodd","dodo","donna","doob","doodab","doodad","doon","nabob","nana","nonda","nondo","noon","oban","onza","zobo","zoon","zoozoo"],"pangrams":[],"count":62},{"letters":["o","k","h","s","p","l"],"center":"e","answers":["holl","hollo","hook","hoop","hoosh","klop","klops","klosh","kohl","koko","kolkhos","kolo","kolokolo","koph","loll","lollop","look","loop","losh","loss","phoh","phoo","phos","phospho","plook","plop","polk","poll","polo","polos","pooh","pook","pookoo","pool","poop","popshop","posh","poss","shoo","shook","shool","shoop","shop","skoo","sloo","sloop","sloosh","slop","slops","slopshop","slosh","soho","solo","sook","sool","sooloos","soph","sosh","soso","soss","splosh","spook","spool","sposh"],"pangrams":[],"count":64},{"letters":["y","w","e","o","n","s"],"center":"t","answers":["enow","ense","ensnow","esne","eyen","eyey","eyne","neese","neon","nese","ness","newness","news","newsy","none","nonene","nones","nonsense","noon","noose","nose","nosey","nosy","nowness","nowy","oneness","oons","osone","osse","ownness","owse","owsen","seen","seesee","sense","senso","sensyne","sess","sewen","sewn","snee","snew","snoose","snow","snowy","sonny","sons","sonsy","soon","soso","soss","sowens","sown","sowse","sweeny","swoon","swoony","swow","syne","ween","weeness","weeny","weewow","wene","wenny","wese","wone","woon","woons","wyne","wynn","wyson","wyss","yees","yese","yeso","yesso"],"pangrams":[],"count":77},{"letters":["i","r","p","h","a","n"],"center":"t","answers":["ahaaina","airan","anan","anana","anapanapa","anaphia","anna","apar","apian","apiarian","apii","apiin","arain","arar","arara","arhar","aria","arna","arni","arrah","arrhinia","hain","hair","hairpin","hanna","harn","harnpan","harp","harr","hippian","irian","nain","nana","napa","narr","narra","nipa","paar","paha","pahi","pain","paip","pair","papa","papain","pappi","para","parah","paraph","paraphia","pari","pariah","parian","parr","pian","pina","pinna","pipa","pipi","pipiri","pippin","piranha","piripiri","pirn","pirr","prana","raia","rain","rana","ranarian","rani","raninian","rann","raphania","ripa","riparian","riprap"],"pangrams":["hairpin","piranha","raphania"],"count":77},{"letters":["l","p","q","e","r","u"],"center":"a","answers":["eeler","elle","epee","leep","leer","leper","lerp","lull","luller","lulu","lupe","lure","lurer","peel","peele","peeler","peep","peeper","peer","pell","peller","pelu","pepper","pepperer","perle","perule","plup","prep","puerer","pule","puler","pull","puller","pulp","pulper","pulque","pulu","pure","puree","purer","purl","purler","purple","purpure","purr","purre","purree","purrel","purrer","qere","queer","queerer","quell","queller","querl","queue","reel","reeler","reeper","repel","repeller","repp","repurple","reree","rereel","ruelle","ruer","rule","ruler","rull","ruller","rupee","ruru","uller","ululu","upper","upperer","uppull"],"pangrams":[],"count":78},{"letters":["k","b","n","o","y","a"],"center":"l","answers":["aboon","anabo","anan","anana","anay","anba","anna","annona","annoy","anoa","anon","baba","babby","baboo","baboon","baby","baka","banaba","banak","banana","bank","bankbook","banky","banya","banyan","baobab","baya","bayok","boba","bobby","bobo","bonbon","bonk","bonny","bony","boob","boobook","booby","book","booky","boon","boonk","byon","kabaya","kaka","kakkak","kana","kanoon","kayak","kayo","knab","knob","knobby","koban","kokako","kokan","koko","kokoon","kona","konak","kooka","koyan","nabak","nabk","nabob","nako","nakoo","nana","nanny","nobby","nonya","nook","nooky","noon","oaky","oban","yaba","yabby","yakka","yank","yanky","yaya","yoky","yook"],"pangrams":[],"count":84},{"letters":["i","g","n","e","y","t"],"center":"r","answers":["egging","eggy","eigne","engine","entente","entity","eyen","eyey","eying","eyne","geet","gegg","geggee","gein","gene","genet","genie","genii","genin","gent","genty","getting","gien","giggit","ging","ginney","ginning","ginny","gyne","gyte","ignite","ingenit","inneity","innet","inning","intent","intine","neet","nete","neti","netting","netty","nignye","nine","nineteen","ninety","ninny","nitty","teen","teenet","teenty","teeny","teet","teeting","teety","tenent","tenet","teng","tenne","tent","tenty","tete","tien","tige","tine","tineine","tinety","ting","tinge","tingi","tining","tinnet","tinning","tinny","tint","tintie","tinting","tinty","tiny","tite","titi","titien","tittie","titty","tyee","tying","yegg","yeni","yenite","yentnite","yite"],"pangrams":[],"count":91},{"letters":["s","h","i","e","o","t"],"center":"n","answers":["esthesio","ethos","heii","hessite","hest","hish","hiss","hist","histie","hithe","hoise","hoist","hoit","hoose","hoosh","hoot","hose","host","hostess","hostie","hoti","hottish","isoseist","issei","issite","osse","osteitis","osteosis","ostitis","ostosis","otiose","otitis","otosis","otto","seesee","seethe","seise","seit","sess","sestet","sesti","seth","setose","sett","settee","shee","sheet","sheth","shies","shiest","shih","shish","shoe","shohet","shoo","shooi","shoot","shootee","shootist","shot","shote","shott","sise","sish","sisi","siss","sissoo","sist","site","sith","sithe","sitio","sittee","soho","soiesette","soot","sooth","soothe","sosh","sosoish","soss","sotie","sots","sottish","stet","stite","stith","stoot","stosh","stoss","stot","teest","teet","teeth","teethe","test","teste","testee","testes","testis","tete","teth","thee","theet","theetsee","theist","these","theses","thesis","thio","this","thoo","those","tite","tithe","titi","tittie","toetoe","toho","toise","toit","toitish","toosh","toot","tooth","tosh","toss","tost","tote","toto","tsetse"],"pangrams":["esthesio","hostie"],"count":133}];
+
+    let currentPuzzle = null;
+    let currentInput = '';
+    let foundWords = [];
+    let score = 0;
+    let messageTimeout = null;
+
+    function init() {
+        // Pick puzzle based on date (daily puzzle)
+        const today = new Date();
+        const dayIndex = (today.getFullYear() * 366 + today.getMonth() * 31 + today.getDate()) % PUZZLES.length;
+        loadPuzzle(dayIndex);
+        setupKeyboard();
+        setupButtons();
+    }
+
+    function loadPuzzle(index) {
+        currentPuzzle = PUZZLES[index];
+        currentInput = '';
+        foundWords = [];
+        score = 0;
+        updateDisplay();
+        renderHoneycomb();
+        renderFoundWords();
+        updateScore();
+        updateProgress();
+        showMessage('');
+    }
+
+    function renderHoneycomb() {
+        const container = document.getElementById('honeycomb');
+        const letters = [...currentPuzzle.letters];
+        const center = currentPuzzle.center;
+
+        // Shuffle outer letters for display
+        shuffleArray(letters);
+
+        container.innerHTML = '';
+
+        // Row 1: 2 letters
+        const row1 = document.createElement('div');
+        row1.className = 'hex-row';
+        row1.appendChild(createHex(letters[0]));
+        row1.appendChild(createHex(letters[1]));
+        container.appendChild(row1);
+
+        // Row 2: 3 letters (center is forbidden)
+        const row2 = document.createElement('div');
+        row2.className = 'hex-row';
+        row2.appendChild(createHex(letters[2]));
+        row2.appendChild(createHex(center, true));
+        row2.appendChild(createHex(letters[3]));
+        container.appendChild(row2);
+
+        // Row 3: 2 letters
+        const row3 = document.createElement('div');
+        row3.className = 'hex-row';
+        row3.appendChild(createHex(letters[4]));
+        row3.appendChild(createHex(letters[5]));
+        container.appendChild(row3);
+    }
+
+    function createHex(letter, isCenter) {
+        const el = document.createElement('div');
+        el.className = 'hex' + (isCenter ? ' center' : '');
+        el.textContent = letter;
+        el.addEventListener('click', function() {
+            addLetter(letter);
+        });
+        return el;
+    }
+
+    function addLetter(letter) {
+        currentInput += letter;
+        updateDisplay();
+    }
+
+    function deleteLetter() {
+        currentInput = currentInput.slice(0, -1);
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        const display = document.getElementById('input');
+        const outerSet = new Set(currentPuzzle.letters);
+
+        let html = '';
+        for (const ch of currentInput) {
+            if (ch === currentPuzzle.center) {
+                html += '<span class="letter forbidden-letter">' + ch + '</span>';
+            } else {
+                html += '<span class="letter">' + ch + '</span>';
+            }
+        }
+        html += '<span class="cursor"></span>';
+        display.innerHTML = html;
+    }
+
+    function submitWord() {
+        const word = currentInput.toLowerCase();
+        currentInput = '';
+
+        if (word.length < 4) {
+            showMessage('Too short', 'error');
+            updateDisplay();
+            return;
+        }
+
+        // Check for forbidden letter
+        if (word.includes(currentPuzzle.center)) {
+            showMessage('Contains forbidden letter!', 'error');
+            updateDisplay();
+            return;
+        }
+
+        // Check only uses valid letters
+        const outerSet = new Set(currentPuzzle.letters);
+        for (const ch of word) {
+            if (!outerSet.has(ch)) {
+                showMessage('Letter not in puzzle', 'error');
+                updateDisplay();
+                return;
+            }
+        }
+
+        // Already found?
+        if (foundWords.includes(word)) {
+            showMessage('Already found', 'error');
+            updateDisplay();
+            return;
+        }
+
+        // Valid answer?
+        if (!currentPuzzle.answers.includes(word)) {
+            showMessage('Not in word list', 'error');
+            updateDisplay();
+            return;
+        }
+
+        // Success!
+        foundWords.push(word);
+        const isPangram = currentPuzzle.pangrams.includes(word);
+        const points = word.length === 4 ? 1 : word.length;
+        const bonus = isPangram ? 7 : 0;
+        score += points + bonus;
+
+        if (isPangram) {
+            showMessage('PANGRAM! +' + (points + bonus), 'pangram');
+        } else {
+            showMessage('+' + points, 'success');
+        }
+
+        updateScore();
+        updateProgress();
+        renderFoundWords();
+        updateDisplay();
+    }
+
+    function showMessage(text, type) {
+        const el = document.getElementById('message');
+        el.textContent = text || '\u00a0';
+        el.className = 'message' + (type ? ' ' + type : '');
+
+        if (messageTimeout) clearTimeout(messageTimeout);
+        if (text) {
+            messageTimeout = setTimeout(function() {
+                el.textContent = '\u00a0';
+                el.className = 'message';
+            }, 2000);
+        }
+    }
+
+    function updateScore() {
+        document.getElementById('score').textContent = score;
+    }
+
+    function updateProgress() {
+        const found = foundWords.length;
+        const total = currentPuzzle.answers.length;
+        const pct = total > 0 ? (found / total * 100) : 0;
+        document.getElementById('progress').style.width = pct + '%';
+        document.getElementById('found-label').textContent = found + ' found';
+        document.getElementById('total-label').textContent = total + ' words';
+    }
+
+    function renderFoundWords() {
+        const container = document.getElementById('found-words');
+        const sorted = [...foundWords].sort();
+        container.innerHTML = sorted.map(function(w) {
+            const isPangram = currentPuzzle.pangrams.includes(w);
+            return '<span class="found-word' + (isPangram ? ' pangram' : '') + '">' + w + '</span>';
+        }).join('');
+        document.getElementById('found-count').textContent = foundWords.length ? foundWords.length + '/' + currentPuzzle.answers.length : '';
+    }
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+    }
+
+    function setupKeyboard() {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitWord();
+            } else if (e.key === 'Backspace') {
+                e.preventDefault();
+                deleteLetter();
+            } else if (/^[a-zA-Z]$/.test(e.key)) {
+                addLetter(e.key.toLowerCase());
+            }
+        });
+    }
+
+    function setupButtons() {
+        document.getElementById('enter-btn').addEventListener('click', submitWord);
+        document.getElementById('delete-btn').addEventListener('click', deleteLetter);
+        document.getElementById('shuffle-btn').addEventListener('click', function() {
+            renderHoneycomb();
+        });
+        document.getElementById('new-puzzle-btn').addEventListener('click', function() {
+            const index = Math.floor(Math.random() * PUZZLES.length);
+            loadPuzzle(index);
+        });
+        document.getElementById('rules-toggle').addEventListener('click', function() {
+            document.getElementById('rules').classList.toggle('open');
+        });
+    }
+
+    init();
+    </script>
+</body>
+</html>

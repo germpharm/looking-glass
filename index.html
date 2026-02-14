@@ -591,7 +591,7 @@
             <p>&#x1F41D; <strong>Bee mode:</strong> Find words that <span class="bee-text">use the center letter</span>. Every word must include it.</p>
             <p>&#x1FA9E; <strong>Glass mode:</strong> Go through the looking glass. Find words that <span class="glass-text">never use the center letter</span>.</p>
             <p>Words must be <strong>4+ letters</strong>. Letters can be reused. Switch modes with the tabs above.</p>
-            <p><strong>Scoring:</strong> 4 letters = 1 point. 5+ letters = 1 point per letter. Pangram = +7 bonus.</p>
+            <p><strong>Scoring:</strong> 4 letters = 1 pt. 5+ letters = 1 pt per letter. Glass words score 1.5x (fewer letters, harder). Pangrams: Bee +7, Glass +10.</p>
         </div>
 
         <button class="btn new-puzzle" id="new-puzzle-btn">New Puzzle</button>
@@ -798,9 +798,11 @@
             if (puzzle.glass.indexOf(word) === -1) { showMessage('Not in word list', 'error'); updateDisplay(); return; }
             glassFound.push(word);
             var pg = puzzle.glassPangrams.indexOf(word) !== -1;
-            var pts = word.length === 4 ? 1 : word.length;
-            glassScore += pts + (pg ? 7 : 0);
-            showMessage(pg ? 'PANGRAM! +' + (pts + 7) : '+' + pts, pg ? 'pangram' : 'success');
+            var base = word.length === 4 ? 1 : word.length;
+            var pts = Math.round(base * 1.5);
+            var total = pts + (pg ? 10 : 0);
+            glassScore += total;
+            showMessage(pg ? 'PANGRAM! +' + total : '+' + pts, pg ? 'pangram' : 'success');
         }
 
         saveProgress();

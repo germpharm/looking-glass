@@ -2,24 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Anti-Bee</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1">
+    <title>Looking Glass</title>
+    <meta property="og:title" content="Looking Glass">
+    <meta property="og:description" content="Same letters. Two worlds. A word game through the looking glass.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Looking Glass">
+    <meta name="twitter:description" content="Same letters. Two worlds.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1FA9E;</text></svg>">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
         :root {
-            --bg: #fafafa;
-            --surface: #fff;
-            --black: #0a0a0a;
-            --dark: #1a1a1a;
-            --mid: #666;
-            --light: #999;
-            --faint: #e0e0e0;
-            --forbidden: #dc2626;
-            --forbidden-bg: #fef2f2;
+            --bg: #faf8f5;
+            --surface: #ffffff;
+            --text: #1a1a1a;
+            --text-mid: #666;
+            --text-light: #999;
+            --border: #e5e0db;
+            --center-bg: #fef9e7;
+            --center-border: #d4a843;
+            --center-text: #b8860b;
+            --accent: #d4a843;
+            --accent-bg: #fef9e7;
+            --hex-bg: #fff;
+            --hex-border: #e5e0db;
             --success: #16a34a;
-            --gold: #ca8a04;
+            --error: #dc2626;
+            --bee-bar: #d4a843;
+            --glass-bar: #7c3aed;
+            --pangram-bg: #fefce8;
+            --pangram-border: #d4a843;
+            --pangram-text: #b8860b;
+            --glow: rgba(212,168,67,0.25);
+        }
+
+        body.glass-mode {
+            --bg: #0c0c14;
+            --surface: #161625;
+            --text: #e8e6e3;
+            --text-mid: #8e8c89;
+            --text-light: #5c5a57;
+            --border: #252538;
+            --center-bg: #2a1a1a;
+            --center-border: #dc2626;
+            --center-text: #ef4444;
+            --accent: #7c3aed;
+            --accent-bg: #1a1a2e;
+            --hex-bg: #161625;
+            --hex-border: #252538;
+            --success: #34d399;
+            --error: #f87171;
+            --bee-bar: #b8860b;
+            --glass-bar: #7c3aed;
+            --pangram-bg: #1a1a2e;
+            --pangram-border: #7c3aed;
+            --pangram-text: #a78bfa;
+            --glow: rgba(124,58,237,0.2);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,25 +67,46 @@
         body {
             font-family: 'Inter', -apple-system, sans-serif;
             background: var(--bg);
-            color: var(--dark);
+            color: var(--text);
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
             -webkit-font-smoothing: antialiased;
+            transition: background 0.5s, color 0.5s;
+            overflow-x: hidden;
+        }
+
+        #portal {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        #portal.expanding {
+            animation: portalExpand 0.7s ease-in-out;
+        }
+
+        @keyframes portalExpand {
+            0% { transform: scale(0); opacity: 0.95; }
+            40% { transform: scale(1); opacity: 0.95; }
+            65% { transform: scale(1); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 0; }
         }
 
         .game {
             max-width: 460px;
             width: 100%;
-            padding: 24px 20px;
+            padding: 16px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
 
-        /* Header */
         .header {
             width: 100%;
             display: flex;
@@ -54,327 +115,453 @@
         }
 
         .title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             letter-spacing: -0.5px;
         }
 
-        .title span {
-            color: var(--forbidden);
-            text-decoration: line-through;
-            text-decoration-thickness: 2px;
+        .title .glass-word {
+            opacity: 0.4;
+            transition: opacity 0.5s, color 0.5s;
+        }
+
+        body.glass-mode .title .glass-word {
+            opacity: 1;
+            color: var(--accent);
         }
 
         .score-display {
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
-            color: var(--mid);
+            color: var(--text-mid);
+            transition: color 0.5s;
         }
 
         .score-display b {
-            color: var(--black);
+            color: var(--text);
             font-weight: 700;
+            transition: color 0.5s;
         }
 
-        /* Progress */
+        .mode-tabs {
+            width: 100%;
+            display: flex;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--border);
+            transition: border-color 0.5s;
+        }
+
+        .mode-tab {
+            flex: 1;
+            padding: 10px 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: var(--surface);
+            color: var(--text-light);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mode-tab.active {
+            background: var(--accent-bg);
+            color: var(--text);
+        }
+
+        .mode-tab .count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .progress-row {
+            width: 100%;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .progress-side { flex: 1; }
+
         .progress-bar {
             width: 100%;
-            height: 6px;
-            background: var(--faint);
+            height: 5px;
+            background: var(--border);
             border-radius: 3px;
             overflow: hidden;
+            transition: background 0.5s;
         }
 
         .progress-fill {
             height: 100%;
-            background: var(--black);
             border-radius: 3px;
             transition: width 0.4s ease;
             width: 0%;
         }
 
+        .progress-fill.bee { background: var(--bee-bar); }
+        .progress-fill.glass { background: var(--glass-bar); }
+
         .progress-label {
-            width: 100%;
             display: flex;
             justify-content: space-between;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: var(--light);
+            font-size: 10px;
+            color: var(--text-light);
+            margin-top: 2px;
+            transition: color 0.5s;
         }
 
-        /* Message */
+        .progress-divider {
+            color: var(--text-light);
+            opacity: 0.3;
+            align-self: center;
+            transition: color 0.5s;
+        }
+
         .message {
-            height: 28px;
+            height: 24px;
             font-size: 14px;
             font-weight: 500;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.3s;
         }
 
         .message.success { color: var(--success); }
-        .message.error { color: var(--forbidden); }
-        .message.pangram { color: var(--gold); font-weight: 700; }
+        .message.error { color: var(--error); }
+        .message.pangram { color: var(--pangram-text); font-weight: 700; }
 
-        /* Input display */
         .input-display {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
-            min-height: 42px;
+            min-height: 38px;
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 1px;
+            transition: color 0.5s;
         }
 
-        .input-display .letter {
-            transition: transform 0.1s;
-        }
-
-        .input-display .letter.forbidden-letter {
-            color: var(--forbidden);
+        .input-display .letter { transition: color 0.3s; }
+        .input-display .letter.required { color: var(--center-text); }
+        .input-display .letter.forbidden {
+            color: var(--error);
             text-decoration: line-through;
+            text-decoration-thickness: 2px;
         }
 
         .cursor {
             display: inline-block;
             width: 2px;
-            height: 32px;
-            background: var(--black);
+            height: 30px;
+            background: var(--text);
             animation: blink 1s step-end infinite;
+            transition: background 0.5s;
         }
 
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
+        @keyframes blink { 50% { opacity: 0; } }
 
-        /* Honeycomb */
         .honeycomb {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 6px;
-            margin: 8px 0;
+            margin: 4px 0;
         }
 
-        .hex-row {
-            display: flex;
-            gap: 6px;
-        }
+        .hex-row { display: flex; gap: 6px; }
 
         .hex {
-            width: 68px;
-            height: 68px;
+            width: 64px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             text-transform: uppercase;
-            background: var(--surface);
-            border: 2px solid var(--faint);
-            border-radius: 12px;
+            background: var(--hex-bg);
+            border: 2px solid var(--hex-border);
+            border-radius: 14px;
             cursor: pointer;
             user-select: none;
-            transition: transform 0.1s, background 0.15s, border-color 0.15s;
+            transition: transform 0.1s, background 0.5s, border-color 0.5s, color 0.5s, box-shadow 0.5s;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .hex:active {
-            transform: scale(0.92);
-        }
-
-        .hex:hover {
-            border-color: var(--light);
-        }
+        .hex:active { transform: scale(0.92); }
 
         .hex.center {
-            background: var(--forbidden-bg);
-            border-color: var(--forbidden);
-            color: var(--forbidden);
+            background: var(--center-bg);
+            border-color: var(--center-border);
+            color: var(--center-text);
             position: relative;
+            box-shadow: 0 0 20px var(--glow);
         }
 
-        .hex.center::after {
+        body.glass-mode .hex.center::after {
             content: '';
             position: absolute;
-            width: 36px;
+            width: 34px;
             height: 2px;
-            background: var(--forbidden);
+            background: var(--center-text);
             transform: rotate(-12deg);
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
-        /* Buttons */
+        .hex.center.flipping {
+            animation: hexFlip 0.7s ease-in-out;
+        }
+
+        @keyframes hexFlip {
+            0% { transform: rotateY(0) scale(1); }
+            50% { transform: rotateY(90deg) scale(1.15); }
+            100% { transform: rotateY(180deg) scale(1); }
+        }
+
         .controls {
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            width: 100%;
+            max-width: 320px;
         }
 
         .btn {
             font-family: 'Inter', sans-serif;
             font-size: 14px;
             font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 2px solid var(--faint);
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
             background: var(--surface);
-            color: var(--dark);
+            color: var(--text);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.15s, background 0.5s, border-color 0.5s, color 0.5s;
+            flex: 1;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .btn:hover {
-            border-color: var(--light);
-        }
-
-        .btn:active {
-            transform: scale(0.96);
-        }
+        .btn:active { transform: scale(0.96); }
 
         .btn.primary {
-            background: var(--black);
-            color: var(--surface);
-            border-color: var(--black);
+            background: var(--text);
+            color: var(--bg);
+            border-color: var(--text);
         }
 
-        .btn.primary:hover {
-            background: var(--dark);
-        }
-
-        /* Found words */
         .found-section {
             width: 100%;
-            margin-top: 8px;
+            margin-top: 4px;
         }
 
-        .found-header {
+        .found-tabs {
             display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--faint);
+            margin-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            transition: border-color 0.5s;
         }
 
-        .found-title {
-            font-size: 13px;
+        .found-tab {
+            padding: 8px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--light);
+            letter-spacing: 0.5px;
+            border: none;
+            background: none;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .found-count {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            color: var(--light);
+        .found-tab.active {
+            color: var(--text);
+            border-bottom-color: var(--accent);
         }
 
         .found-words {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
+            min-height: 20px;
         }
+
+        .found-words.hidden { display: none; }
 
         .found-word {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            padding: 4px 10px;
+            font-size: 12px;
+            padding: 3px 8px;
             background: var(--surface);
-            border: 1px solid var(--faint);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-transform: uppercase;
+            transition: all 0.5s;
+        }
+
+        .found-word.pangram {
+            background: var(--pangram-bg);
+            border-color: var(--pangram-border);
+            color: var(--pangram-text);
+            font-weight: 600;
+        }
+
+        .mirror-section {
+            width: 100%;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            display: none;
+            transition: border-color 0.5s;
+        }
+
+        .mirror-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+            transition: color 0.5s;
+        }
+
+        .mirror-words {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            transform: scaleY(-1);
+            opacity: 0.12;
+            filter: blur(0.3px);
+            pointer-events: none;
+        }
+
+        .mirror-word {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 3px 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 4px;
             text-transform: uppercase;
         }
 
-        .found-word.pangram {
-            background: #fefce8;
-            border-color: var(--gold);
-            color: var(--gold);
-            font-weight: 500;
+        .share-btn {
+            width: 100%;
+            max-width: 320px;
+            margin-top: 8px;
+            flex: none;
         }
 
-        /* Rules toggle */
         .rules-toggle {
             font-size: 12px;
-            color: var(--light);
+            color: var(--text-light);
             cursor: pointer;
             border: none;
             background: none;
             font-family: 'Inter', sans-serif;
             text-decoration: underline;
             text-underline-offset: 2px;
+            transition: color 0.5s;
         }
 
         .rules {
             width: 100%;
             font-size: 13px;
-            color: var(--mid);
+            color: var(--text-mid);
             line-height: 1.7;
             padding: 16px;
             background: var(--surface);
-            border: 1px solid var(--faint);
+            border: 1px solid var(--border);
             border-radius: 8px;
             display: none;
+            transition: all 0.5s;
         }
 
         .rules.open { display: block; }
-
         .rules p { margin-bottom: 8px; }
         .rules p:last-child { margin-bottom: 0; }
-        .rules strong { color: var(--dark); }
-        .rules .forbidden-text { color: var(--forbidden); font-weight: 600; }
+        .rules strong { color: var(--text); }
+        .rules .bee-text { color: #b8860b; font-weight: 600; }
+        .rules .glass-text { color: #dc2626; font-weight: 600; }
 
-        /* New puzzle */
-        .new-puzzle {
-            margin-top: 8px;
-        }
+        .new-puzzle { margin-top: 4px; flex: none; width: auto; padding: 10px 24px; }
 
-        /* Footer */
         .footer {
-            margin-top: 16px;
+            margin-top: 12px;
             font-size: 11px;
-            color: var(--light);
+            color: var(--text-light);
             text-align: center;
+            line-height: 1.6;
+            transition: color 0.5s;
         }
 
         .footer a {
-            color: var(--mid);
+            color: var(--text-mid);
             text-decoration: none;
+            transition: color 0.5s;
         }
 
         @media (max-width: 380px) {
-            .hex {
-                width: 58px;
-                height: 58px;
-                font-size: 20px;
-            }
-            .input-display {
-                font-size: 24px;
+            .hex { width: 56px; height: 56px; font-size: 20px; }
+            .input-display { font-size: 22px; }
+            .mode-tab { font-size: 12px; padding: 8px 6px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 <body>
+    <div id="portal"></div>
     <div class="game">
         <div class="header">
-            <div class="title">Anti-<span>B</span>ee</div>
+            <div class="title">Looking <span class="glass-word">Glass</span></div>
             <div class="score-display">Score: <b id="score">0</b></div>
         </div>
 
-        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-        <div class="progress-label">
-            <span id="found-label">0 found</span>
-            <span id="total-label">0 words</span>
+        <div class="mode-tabs">
+            <button class="mode-tab active" id="tab-bee" onclick="switchMode('bee')">
+                &#x1F41D; Bee <span class="count" id="bee-tab-count">0/0</span>
+            </button>
+            <button class="mode-tab" id="tab-glass" onclick="switchMode('glass')">
+                &#x1FA9E; Glass <span class="count" id="glass-tab-count">0/0</span>
+            </button>
+        </div>
+
+        <div class="progress-row">
+            <div class="progress-side">
+                <div class="progress-bar"><div class="progress-fill bee" id="bee-progress"></div></div>
+                <div class="progress-label"><span id="bee-found-label">0</span><span id="bee-total-label">0</span></div>
+            </div>
+            <span class="progress-divider">|</span>
+            <div class="progress-side">
+                <div class="progress-bar"><div class="progress-fill glass" id="glass-progress"></div></div>
+                <div class="progress-label"><span id="glass-found-label">0</span><span id="glass-total-label">0</span></div>
+            </div>
         </div>
 
         <div class="message" id="message">&nbsp;</div>
-
         <div class="input-display" id="input"><span class="cursor"></span></div>
-
         <div class="honeycomb" id="honeycomb"></div>
 
         <div class="controls">
@@ -384,121 +571,187 @@
         </div>
 
         <div class="found-section">
-            <div class="found-header">
-                <span class="found-title">Found words</span>
-                <span class="found-count" id="found-count"></span>
+            <div class="found-tabs">
+                <button class="found-tab active" id="found-tab-bee" onclick="showFoundList('bee')">&#x1F41D; Bee</button>
+                <button class="found-tab" id="found-tab-glass" onclick="showFoundList('glass')">&#x1FA9E; Glass</button>
             </div>
-            <div class="found-words" id="found-words"></div>
+            <div class="found-words" id="found-words-bee"></div>
+            <div class="found-words hidden" id="found-words-glass"></div>
+            <div class="mirror-section" id="mirror-section">
+                <div class="mirror-label" id="mirror-label">through the glass</div>
+                <div class="mirror-words" id="mirror-words"></div>
+            </div>
         </div>
+
+        <button class="btn share-btn" id="share-btn" onclick="shareResults()">Share Results</button>
 
         <button class="rules-toggle" id="rules-toggle">How to play</button>
         <div class="rules" id="rules">
-            <p><strong>The opposite of Spelling Bee.</strong></p>
-            <p>Make words using the outer letters. The <span class="forbidden-text">center letter is forbidden</span>. You cannot use it.</p>
-            <p>Words must be <strong>4+ letters</strong>. Letters can be reused. Every word in the dictionary counts.</p>
-            <p><strong>Scoring:</strong> 4 letters = 1 point. 5+ letters = 1 point per letter. Pangram (all 6 outer letters) = +7 bonus.</p>
+            <p><strong>Two games. One puzzle. Opposite rules.</strong></p>
+            <p>&#x1F41D; <strong>Bee mode:</strong> Find words that <span class="bee-text">use the center letter</span>. Every word must include it.</p>
+            <p>&#x1FA9E; <strong>Glass mode:</strong> Go through the looking glass. Find words that <span class="glass-text">never use the center letter</span>.</p>
+            <p>Words must be <strong>4+ letters</strong>. Letters can be reused. Switch modes with the tabs above.</p>
+            <p><strong>Scoring:</strong> 4 letters = 1 point. 5+ letters = 1 point per letter. Pangram = +7 bonus.</p>
         </div>
 
         <button class="btn new-puzzle" id="new-puzzle-btn">New Puzzle</button>
 
         <div class="footer">
-            Through the looking glass. Same game, exact opposite objective.<br>
+            Same letters. Two worlds.<br>
             <a href="https://germpharm.org">GermPharm</a>
         </div>
     </div>
 
     <script>
-    const PUZZLES = [{"letters":["z","y","o","p","d","b"],"center":"i","answers":["bobby","bobo","body","boob","booby","bood","boody","boozy","bozo","dobby","doby","dodd","doddy","dodo","doob","dozy","oopod","oozy","pobby","poddy","poop","poppy","yoop","zobo","zoozoo"],"pangrams":[],"count":25},{"letters":["n","o","k","q","s","d"],"center":"r","answers":["dodd","dodo","dook","doon","doss","koko","kokoon","nondo","nook","noon","odds","odso","onkos","oons","skoo","snod","snood","snook","sond","sonk","sons","sook","soon","soso","soss"],"pangrams":[],"count":25},{"letters":["v","n","r","f","o","d"],"center":"i","answers":["dodd","dodo","doff","donor","doon","door","dorn","fond","fono","food","ford","fordo","frond","nondo","nonfood","noon","odor","oord","rodd","rond","rondo","rood","roof","roon","voodoo"],"pangrams":[],"count":25},{"letters":["x","q","v","a","l","e"],"center":"n","answers":["alala","alee","allele","aval","axal","axle","eave","elle","exlex","lall","lava","lave","leal","leave","levee","level","vale","vall","valva","valval","valve","veal","vela","velal","vell","vellala"],"pangrams":[],"count":26},{"letters":["z","n","v","f","o","e"],"center":"l","answers":["enfeoff","enzone","eozoon","even","evoe","evzone","feeze","feoff","feoffee","fono","neeze","neon","neve","nevo","none","nonene","noon","novene","ooze","oven","ozone","veen","venene","zone","zoon","zoozoo"],"pangrams":[],"count":26},{"letters":["c","e","x","r","j","o"],"center":"a","answers":["cere","cerer","cero","cerrero","cocco","coco","coerce","coercer","cooee","cooer","cooree","core","corer","cree","croc","crore","ejoo","error","jeer","jeerer","joree","oxer","recce","recco","reree","rococo","roer"],"pangrams":[],"count":27},{"letters":["y","o","r","k","h","s"],"center":"a","answers":["hook","hooky","hoosh","horror","horsy","hory","koko","ohoy","roky","rook","rooky","rory","ross","rosy","shoo","shook","shoor","shor","skoo","soho","sook","sooky","sorry","sory","sosh","soso","soss","yoky","yook","york"],"pangrams":[],"count":30},{"letters":["u","w","h","e","n","o"],"center":"t","answers":["eheu","enow","hewn","hone","hoon","howe","hunh","neon","nohow","none","nonene","noon","noun","nowhen","onehow","unhewn","unnew","unown","unwon","ween","weewow","wene","whee","wheen","when","whew","whone","whoo","whun","wone","woohoo","woon"],"pangrams":[],"count":32},{"letters":["h","a","n","j","g","b"],"center":"r","answers":["agha","ajaja","anan","anana","anba","anhang","anjan","anna","baba","baga","bahan","bajan","banaba","banana","bang","banga","bhang","gabgab","gang","ganga","gangan","ganggang","ganja","haab","habnab","hanna","jann","naga","nagana","nagnag","nana","nanga"],"pangrams":[],"count":32},{"letters":["i","n","s","m","u","z"],"center":"r","answers":["immi","minim","minimism","minimum","minimus","minium","minus","miss","missis","muss","muzz","nisus","numinism","nummi","nummus","nunni","simsim","sinus","sisi","siss","sizz","snum","sunn","susi","susu","suum","uninn","unsin","unsun","zimmi","zimmis","zizz","zuisin"],"pangrams":[],"count":33},{"letters":["l","i","n","b","y","r"],"center":"e","answers":["bibb","bibi","bibiri","bilby","bill","billy","biri","birl","birlinn","birn","birny","birr","brill","brin","briny","illy","inby","inly","liin","lill","lily","linin","linn","liny","llyn","nibby","ninny","ribby","rill","rilly","yill","yirn","yirr"],"pangrams":[],"count":33},{"letters":["p","b","a","x","r","m"],"center":"t","answers":["amapa","amar","amba","ambar","amma","amra","apar","araba","arar","arara","arba","baar","baba","bara","barabara","barb","barm","barra","brab","maam","mamba","mamma","marara","marm","paar","papa","para","param","parma","parr","praam","pram","ramarama","ramp"],"pangrams":[],"count":34},{"letters":["b","l","v","p","a","d"],"center":"t","answers":["abdal","adad","adda","alada","alala","alba","appall","aval","baal","baba","bald","ball","ballad","blab","blad","dabb","dabba","dada","dadap","labba","lablab","lall","lava","paal","pall","palla","pallall","palp","palpal","papa","papal","plap","vall","valva","valval"],"pangrams":[],"count":35},{"letters":["t","h","e","l","q","y"],"center":"n","answers":["eely","elle","ethel","ethyl","ettle","eyelet","eyey","heel","hele","hell","helly","hyle","leet","lete","teel","teet","teeth","teethe","teethy","teety","tele","tell","tellee","tellt","telt","tete","tetel","teth","thee","theet","they","theyll","tyee","yeel","yell","yelt","yeth"],"pangrams":[],"count":37},{"letters":["l","p","s","t","v","i"],"center":"o","answers":["ipil","lill","lilt","lisp","liss","list","piitis","pili","pill","pipi","pipit","piss","pist","pistil","pitpit","sill","silt","sisi","siss","sist","slip","slit","spill","spilt","spit","spiv","split","still","stilt","till","tilt","tipiti","tiptilt","titi","titlist","vill","villitis","visit"],"pangrams":[],"count":38},{"letters":["c","s","o","d","u","g"],"center":"n","answers":["cocco","coccous","coccus","coco","codo","coss","couscous","couscousou","cuscus","cuss","cusso","dodd","dodo","doggo","dogs","doss","douc","dugdug","gogo","good","goods","gugu","guss","odds","odso","scog","scud","scudo","scug","soco","soso","soss","soud","succous","succuss","sudd","suds","susu"],"pangrams":[],"count":38},{"letters":["k","b","l","r","i","u"],"center":"a","answers":["bibb","bibi","bibiri","bilk","bill","biri","birk","birl","birr","blub","blur","blurb","brill","bulb","bulbil","bulbul","bulk","bull","buri","burl","burr","kiki","kiku","kill","kiri","kirk","kukri","kuku","kukui","lill","lull","lulu","lurk","rikk","rill","rull","ruru","ululu","urubu"],"pangrams":[],"count":39},{"letters":["z","i","l","b","e","y"],"center":"a","answers":["belee","belibel","belie","bell","belle","belly","bely","bezel","bezzi","bezzle","bibb","bibble","bibi","bilbie","bilby","bile","bill","billy","bizz","bleb","blebby","blee","bleeze","bleezy","blibe","blizz","byee","eely","elle","eyey","illy","izle","libel","libelee","lile","lill","lily","yeel","yell","yezzy","yill","zizz"],"pangrams":[],"count":42},{"letters":["j","u","y","t","e","s"],"center":"n","answers":["estus","eyey","jess","jest","jestee","jete","jetty","juju","just","jute","jutty","seesee","sess","sestet","sett","settee","stet","stey","stue","stuss","stut","suet","suety","susu","suttee","teest","teet","teety","teju","test","teste","testee","testes","testy","tete","tsetse","tute","tutee","tuts","tutty","tutu","tyee","tyste","usee","utees","yees","yese","yest","yesty","yutu"],"pangrams":[],"count":50},{"letters":["a","n","w","d","y","u"],"center":"i","answers":["adad","adaw","adawn","aday","adda","anan","anana","ananda","anay","anda","anna","anyway","away","awny","dada","daddy","dand","danda","dandy","daud","dauw","dawdy","dawn","dawny","daydawn","duad","dunny","duny","dyad","nana","nandu","nanny","unadd","unau","unaway","undy","unwan","waddy","wadna","wand","wandy","wanny","wany","wawa","wudu","wunna","wynd","wynn","yaud","yawn","yawny","yawy","yaya","yday","yuan"],"pangrams":[],"count":55},{"letters":["i","s","p","h","u","m"],"center":"l","answers":["himp","hippish","hippus","hish","hiss","humhum","hump","humph","humus","hush","huss","immi","impi","impish","impship","imshi","mimp","miss","missis","missish","mump","mumpish","mumps","mumpsimus","mush","muss","pimp","pimpish","pimpship","pipi","pish","pishu","piss","pump","push","puss","shih","shim","ship","shish","shush","simp","simsim","sish","sisi","siss","smush","sump","sumph","sumphish","sumpsimus","susi","susu","suum","umph","uppish","uppush","upsup"],"pangrams":["mumpish","sumphish"],"count":58},{"letters":["w","y","s","a","i","b"],"center":"l","answers":["abas","abasia","abbas","abbasi","abbassi","abwab","abyss","assai","assay","assbaa","assi","assis","asway","awabi","away","awiwi","baba","babai","babby","baby","basis","bass","baya","bias","bibb","bibi","biwa","byway","ibis","iiwi","isba","iwaiwa","iwis","sasa","sass","sassaby","sassy","sawbwa","sawway","saya","sibby","sisi","siss","sissy","swab","sway","swiss","wabby","wasabi","wawa","ways","wiss","wyss","yaba","yabbi","yabby","yaws","yawy","yaya"],"pangrams":[],"count":59},{"letters":["n","a","z","o","b","d"],"center":"r","answers":["abandon","aboon","adad","adda","anabo","anan","anana","ananda","anba","anda","anna","annona","anoa","anon","azon","baba","baboo","baboon","badan","banaba","banana","band","banda","bandanna","bando","baobab","bazoo","boba","bobo","bonanza","bonbon","bond","bonnaz","boob","bood","boon","boza","bozo","dabb","dabba","dada","dado","dand","danda","doab","dodd","dodo","donna","doob","doodab","doodad","doon","nabob","nana","nonda","nondo","noon","oban","onza","zobo","zoon","zoozoo"],"pangrams":[],"count":62},{"letters":["o","k","h","s","p","l"],"center":"e","answers":["holl","hollo","hook","hoop","hoosh","klop","klops","klosh","kohl","koko","kolkhos","kolo","kolokolo","koph","loll","lollop","look","loop","losh","loss","phoh","phoo","phos","phospho","plook","plop","polk","poll","polo","polos","pooh","pook","pookoo","pool","poop","popshop","posh","poss","shoo","shook","shool","shoop","shop","skoo","sloo","sloop","sloosh","slop","slops","slopshop","slosh","soho","solo","sook","sool","sooloos","soph","sosh","soso","soss","splosh","spook","spool","sposh"],"pangrams":[],"count":64},{"letters":["y","w","e","o","n","s"],"center":"t","answers":["enow","ense","ensnow","esne","eyen","eyey","eyne","neese","neon","nese","ness","newness","news","newsy","none","nonene","nones","nonsense","noon","noose","nose","nosey","nosy","nowness","nowy","oneness","oons","osone","osse","ownness","owse","owsen","seen","seesee","sense","senso","sensyne","sess","sewen","sewn","snee","snew","snoose","snow","snowy","sonny","sons","sonsy","soon","soso","soss","sowens","sown","sowse","sweeny","swoon","swoony","swow","syne","ween","weeness","weeny","weewow","wene","wenny","wese","wone","woon","woons","wyne","wynn","wyson","wyss","yees","yese","yeso","yesso"],"pangrams":[],"count":77},{"letters":["i","r","p","h","a","n"],"center":"t","answers":["ahaaina","airan","anan","anana","anapanapa","anaphia","anna","apar","apian","apiarian","apii","apiin","arain","arar","arara","arhar","aria","arna","arni","arrah","arrhinia","hain","hair","hairpin","hanna","harn","harnpan","harp","harr","hippian","irian","nain","nana","napa","narr","narra","nipa","paar","paha","pahi","pain","paip","pair","papa","papain","pappi","para","parah","paraph","paraphia","pari","pariah","parian","parr","pian","pina","pinna","pipa","pipi","pipiri","pippin","piranha","piripiri","pirn","pirr","prana","raia","rain","rana","ranarian","rani","raninian","rann","raphania","ripa","riparian","riprap"],"pangrams":["hairpin","piranha","raphania"],"count":77},{"letters":["l","p","q","e","r","u"],"center":"a","answers":["eeler","elle","epee","leep","leer","leper","lerp","lull","luller","lulu","lupe","lure","lurer","peel","peele","peeler","peep","peeper","peer","pell","peller","pelu","pepper","pepperer","perle","perule","plup","prep","puerer","pule","puler","pull","puller","pulp","pulper","pulque","pulu","pure","puree","purer","purl","purler","purple","purpure","purr","purre","purree","purrel","purrer","qere","queer","queerer","quell","queller","querl","queue","reel","reeler","reeper","repel","repeller","repp","repurple","reree","rereel","ruelle","ruer","rule","ruler","rull","ruller","rupee","ruru","uller","ululu","upper","upperer","uppull"],"pangrams":[],"count":78},{"letters":["k","b","n","o","y","a"],"center":"l","answers":["aboon","anabo","anan","anana","anay","anba","anna","annona","annoy","anoa","anon","baba","babby","baboo","baboon","baby","baka","banaba","banak","banana","bank","bankbook","banky","banya","banyan","baobab","baya","bayok","boba","bobby","bobo","bonbon","bonk","bonny","bony","boob","boobook","booby","book","booky","boon","boonk","byon","kabaya","kaka","kakkak","kana","kanoon","kayak","kayo","knab","knob","knobby","koban","kokako","kokan","koko","kokoon","kona","konak","kooka","koyan","nabak","nabk","nabob","nako","nakoo","nana","nanny","nobby","nonya","nook","nooky","noon","oaky","oban","yaba","yabby","yakka","yank","yanky","yaya","yoky","yook"],"pangrams":[],"count":84},{"letters":["i","g","n","e","y","t"],"center":"r","answers":["egging","eggy","eigne","engine","entente","entity","eyen","eyey","eying","eyne","geet","gegg","geggee","gein","gene","genet","genie","genii","genin","gent","genty","getting","gien","giggit","ging","ginney","ginning","ginny","gyne","gyte","ignite","ingenit","inneity","innet","inning","intent","intine","neet","nete","neti","netting","netty","nignye","nine","nineteen","ninety","ninny","nitty","teen","teenet","teenty","teeny","teet","teeting","teety","tenent","tenet","teng","tenne","tent","tenty","tete","tien","tige","tine","tineine","tinety","ting","tinge","tingi","tining","tinnet","tinning","tinny","tint","tintie","tinting","tinty","tiny","tite","titi","titien","tittie","titty","tyee","tying","yegg","yeni","yenite","yentnite","yite"],"pangrams":[],"count":91},{"letters":["s","h","i","e","o","t"],"center":"n","answers":["esthesio","ethos","heii","hessite","hest","hish","hiss","hist","histie","hithe","hoise","hoist","hoit","hoose","hoosh","hoot","hose","host","hostess","hostie","hoti","hottish","isoseist","issei","issite","osse","osteitis","osteosis","ostitis","ostosis","otiose","otitis","otosis","otto","seesee","seethe","seise","seit","sess","sestet","sesti","seth","setose","sett","settee","shee","sheet","sheth","shies","shiest","shih","shish","shoe","shohet","shoo","shooi","shoot","shootee","shootist","shot","shote","shott","sise","sish","sisi","siss","sissoo","sist","site","sith","sithe","sitio","sittee","soho","soiesette","soot","sooth","soothe","sosh","sosoish","soss","sotie","sots","sottish","stet","stite","stith","stoot","stosh","stoss","stot","teest","teet","teeth","teethe","test","teste","testee","testes","testis","tete","teth","thee","theet","theetsee","theist","these","theses","thesis","thio","this","thoo","those","tite","tithe","titi","tittie","toetoe","toho","toise","toit","toitish","toosh","toot","tooth","tosh","toss","tost","tote","toto","tsetse"],"pangrams":["esthesio","hostie"],"count":133}];
+    var RAW = [
+["tgyebv","i","bebite beige bibb bibi bigeye bigg bite biti bitt bittie bitty bityite gebbie gibbet gibby gibe giggit give givey tibby tibet tibey tige titbit titbitty tite titi tittie titty tivy vegetive vetitive vive yite","beet beety beeve beget betty bevy byee eggy eyey geet gegg geggee gyte gyve tebbet teet teety teevee tete tyee vegete yegg","",""],
+["lyfimb","t","biti bitt bitty fifty fitly fittily fitty flit immit lift lilt limit milt milty mitt mitty mity tibby tiff tiffy tift till tilly tilt tilty titbit titbitty titi titty yilt","bibb bibi biff bilby bilify bilimbi bill billy bimbil blimy fill filly film filmily filmy iffy illy immi lill lily lilyfy limb limby limy miff miffy mill mimly yill","",""],
+["wmdriu","t","dimit dirt duit immit mitt muriti mutt mutuum timid tirr tirrwirr tirwit titi triduum trim tritium triturium triurid tumid tumtum turd turm turmit turr tururi tutti tutu tuwi twit utrum utum writ","dird dirdum druid drum duim dumdum iiwi immi irid iridium mird mirid mudd mudir muid muir murdrum murid murium murmur murumuru rimu rudd ruru umiri widu wird wirr wudu","",""],
+["opujtx","s","joss joust just justo opus oust outpost outspout poss post puss soot soso soss sots soup spoot spot spout sput stoop stoot stop stoss stot stoup stout stupp stuss stut suppost susu tops toss tosspot tossup tost tuts upspout upsup uptoss","juju otto outjut outpop output outtop poop poot potoo pott potto pout putt toop toot topo toto toup tout tutu uppop","",""],
+["lozhcw","s","closh cohosh coloss cosh coss hoosh howso losh loss scho school scow scowl shoo shool show sloo sloosh slosh slow slows soco soho solo sool sooloos sosh soso soss sowl swoosh swosh swow whoosh woosh","chocho chol chow chowchow clow cocco coco coho cohol coll cool cowl hocco holl hollo hollow hooch howl loch loco lohoch loll whoo woohoo wool zocco zoccolo zoll zoozoo","",""],
+["dafpej","o","adpao apod apoop dado dedo dodd dodded dodo doff doodad dooja dopa dope eddo ejoo epode epopee feod feoff feoffee fodda food oopod pepo podded pooa poof poop pooped pope poppa","adad adda added adead adeep affa ajaja dada dadap dade daff dead deaf deed deedeed deep depa edea epee fade faded faff feed jade jaded jape jeep jeff papa pape peda pedee peed peep","",""],
+["txwdfe","a","adad adat adaw adawe adda addax added adead adet affa atef atta awaft awat awee axed axweed dada dade daff daft data date dawtet dead deaf defat defeat detax dewax edea exeat fade faded faff fate fated fatwa feat tade taffeta taft tate tatta tawa taxed taxwax tead teat teated twae twat wade waff waft watt wawa waxweed weeda weta","deed deedeed deft effete feed teet teff tete text twee tweed tweeded tweet wedded wede weed weeded weet weft wefted wetted","",""],
+["gjndas","t","adat angst annat anta asta atta dansant danta dasnt data gant ganta gantang gast gata gnat jagat nant nast natant sant satan satang stadda stag stagnant stand stang statant tana tanan tandan tang tanga tangantangan tangs tass tatta tsantsa","adad adda adjag ajaja anan anana ananas ananda anda anjan anna ansa asana dada dagassa dagga dags dand danda dang gang ganga gangan ganggang ganja jangada jann jass naga nagana nagnag nana nanga saga sand sandan sang sanga sans sasa sasan sass snag","",""],
+["fghlak","n","alan alannah allan anal anan anana anhang ankh anna annal falanaka fana fanal fang flan flank galanga gang ganga gangan ganggang hallan hangkang hank hanna kana kang kanga khan khankah knag laang lagan lagna lalang langaha lank naga nagana nagnag nallah nana nanga","affa agal agha agla akala alala alfa alfalfa alga algal faff fall flaff flag flagfall flak gaff gala galagala galah galgal gall galla gallah glaga haaf haff hala halakah halal half hall hallah kaha kaka kakkak kala kallah lall","",""],
+["sieqja","n","aenean anan anana ananas anes anesis anis anise anjan anna ansa asana asinine assassin easiness enaena ense esne inaja inane inness insane insaneness insea insee insense jane jann jean jeans jenna jina jinja jinn jinni nain nais nana nane nanes nasi neese nese ness nine nisei nisnas nisse sain sanai sane saneness sanies sans sansei sansi sasan sasani sasin sasine seen seenie seine senna sensa sense sienna sina sine sinnen sissiness snee","ajaja assai asse assess assessee assi assis assise ease issei jass jess sasa sass seesee seise sess sise sisi siss","",""],
+["fanjgp","e","aenean agape agee agen anagep anapnea apnea appanage enaena enage engage epee fage fanega gaen gaffe gage gagee gane ganef gange gape gean geejee gegg geggee gena genapp gene genep jane jape jean jeep jeff jenna nane nape nappe neap neep paean page pane pangane pangen pangene pannage panne papane pape peag peage pean peen peenge peep pega penang penna pennae pennage","affa ajaja anagap anan anana anapanapa anjan anna faff fana fang gaff gang ganga gangan ganggang ganja gapa janapa janapan jann japan naga nagana nagnag nana nanga napa paga pagan pang papa","",""],
+["oynsgz","a","agnosy agog agon agony anagogy anan anana ananas anay ango anna annona annoy anoa anon anonang ansa asana assay azon azygos gang ganga gangan ganggang gansy ganza gassy gazon gazy goanna gogga goggan gossan naga nagana naggy nagnag nana nanga nanny naos naysay nonagon nongas nongassy nonya nyanza onza saga saggon saggy sago sagy sang sanga sans sasa sasan sass sassy saya snag snaggy snoga soya yang yaya yoga yogasana zany zogan zyga","gogo gong gony gonys goon goosy gossoon gossy noon nosy oons oozy snog snoozy soggy song songy sonny sons sonsy soon soso soss syzygy zogo zoogony zoon zoons zoozoo zygon","",""],
+["qmagso","n","agon amang amman ammono among anam anama anan anana ananas ango anna annona anoa anon anonang ansa asana assman gagman gammon ganam gang ganga gangan ganggang gangman gangsman gasman gnomon goanna goggan gong gongman goon gossan gossoon magsman mammon mana manas mang manga mango mangona manna mannan mannosan mano manso mason moan moggan mona monas mong mono monsoon moon moonman naam naga nagana nagman nagnag nagsman nana nanga nanosoma naos noma nomos nonagon nongas noon oons sagaman saggon saman samson sang sanga sans sasan snag snog snoga song songman sons soon","agama agog agsam amaas amaga amass amma ammo gamma gogga gogo gooma maam magas magma mamma mamo maomao masa mass massa mogo momo moosa moss ogam omao saga sago sasa sass smog soam soma somma soso soss","",""],
+["akevdu","n","addend addenda advene aenean aknee akund anan anana ananda anda anend ankee anna aune avadana avenue dand danda dank daven deaden dean denda dene denude dudeen duenna dune dunk dunne dvandva enaena ended endue ennead even kana kanae kande keen keena keened kekuna kend knave knead knee kneed kuan kunk nake naked nana nandu nane nankeen nave need neve nude nuke unadd unadded unau unavenued unde undead undeadened undean undeeded unden undenuded undue unduke unended unendued unevaded uneven unked unken unkenned unknave unkneaded unnaked unneeded unvended unvenued vane vaned vedana veen venada vend vendee vendue venene venue","adad adda added adead akeake akee dada dade daud dead deave deed deedeed deva duad dude duke eave eaved edea ekka evade kaka kakkak kakke kava keek keeve kudu kuku uvea vade veuve","",""],
+["jgralc","o","acarol acor agog agora ajog alco algor ararao argo argol aroar arolla cacao callo calool calor caracol cargo caroa carol claro cloaca cloacal clog coal coca coccal cocco coco cocoa cola coll collar collocal colocola color cooja cool cora coral coroa corol corolla corral croc crool gagor gaol gargol garoo glor goal gogga gogo gola gollar googol gool gora goracco goral gorra grog jarool joll joola laccol lalo largo loca local loco logo logroll loll lora loral loro olla oral orlo raccroc roar rococo roll rool roral","acara acca agal agar agla agral ajaja ajar alala alar alga algal araca arar arara arca argal argala calcar call caracal caracara carga carl carr clag crag gala galagala galgal gall galla gara glaga glar jacal jagla jara jararaca jarg jarl jarra lacca laggar lall raga raja","",""],
+["eldbxi","t","bebelted bebite bedebt beet beetle beetled belite belittle bellite belt belted beltie betel betide betitle betted bidet bietle billbeetle billet bite biti bitt bitted bittie blet blite debit debt debtee delete diet dite dittied dixit edit elite ettle exit exite idite leet lete libbet lilt lite little tebbet teedle teel teet teil tele teli tell tellee tellt telt tete tetel tettix text textile textlet tibet tidbit tiddle tide tided tied tilde tile tiled till tillite tilt titbit tite titi title titled tittie tittle","bdellid bebed bebled bedded bedel beld belee belibel belie bell belle belled bellied bibb bibble bibi bide bield bilbie bile bill billed bleb bled blee bleed blibe debile deed deedeed dele delible dell dibble diddle didie didle dieb dill dilli dixie edible elide elidible elle exdie exile exlex ibex ibid idle ilex lede leed libel libelee libidibi lidded lied lile lilied lill","",""],
+["faynct","r","acara acracy afar afara affray anacara anarya antra araca arar arara arca arcana arna arrant array artar artcraft arty atry attar attract attractant canary cantar cantara caracara caract caranna carat carr carry cart carty cataract craft crafty cran cranny crantara farcy farfara franc frat fratry fray frayn nacarat nacry narr narra nary natr racy raff raft rafty rana rann ranny rant rantan ranty rata rattan ratty raya rynt taar tantara tantarara tantra tara taraf tarantara tarata taratantara tarfa tarn tarr tarry tart tartan tartana tartar tayra tract trant tray tryt tyranny tyrant tyrantcraft yaray yarn yarr yarran","acana acca acta affa affy anan anana anay anna annat anta atta caffa caftan cancan canna canny cant cantata canty cany catan catty cyan fact facty facy faff faffy fana fancy fant fatty nana nancy nanny nant natant natty tact taffy taft tana tanan tatta tatty yacca yaff yaya","tyrantcraft",""],
+["qfnier","s","eeriness ense enserf esere eserine esne feis ferineness fess fieriness fineness finesse finesser finis fise freeness innerness inness insee inseer insense iris irisin iserine issei neese nese ness nisei nisse reese reins reis renes rerise resee reseise reseiser resene reserene resin resiner rifeness rinse rinser rise risen riser risser seen seenie seer seeress seesee seine seiner seise sense sere serene sereneness serf series serif serin serine sess sier sife sine sinnen sinner sinneress sire siren sirene siress siris sirree sise sisi siss sissiness snee sneer sneerer sniff sniffer sniffiness","eerie enfree erne feer feere feif ferie ferine fern ferri ferrier fife fifer fifie fine finer finner fire firer firn free freer freir frier infer infern inferrer inner irene neer neif nerine nife niffer nine qere qeri reef reefer reen refer referee referrer refine refiner refire reif rein reinfer renin renne rennin reree rerefief rier rife riff rine rinner","",""],
+["isazmh","r","aimara airish amar amhar amir amra arar arara arhar aria arms arrah arras arris arrish arsis hair harass harish harm harr harsh harshish hassar ihram iris izar mahar marara maria maris marish marm marsh mirish mirza raash raia rais ramarama ramass rami rammish rarish rasa rash razz razzia rima rishi rizzar saimiri sair samara samaria samarra samiri samsara sari sarra sarsa shamir shirr shram simar siriasis sirih siris sirrah sizar smarm smiris zamarra ziara zihar zimarra zira zirai","ahimsa amaas amah amass amazia amimia amiss amma assai assi assis assish hami hammam hamsa hamza hash hashish hish hiss hizz imam imamah immi imshi maam maha maim mamma masa mash masha mass massa maza miamia mias miasm miasma mima misaim mishmash miss missis missish sahh saim samh sasa sash sass shah shahi sham shama shammish shih shim shish shisham sima simsim sish sisham sisi siss sizz smash zimmi zimmis zizz","",""],
+["dtorjk","e","dedo deed deedeed deer dekko dere deter dodded dodder doddered dodderer doer doke dooket doored doree dorje dorter dote doted doter dotted dotter dree edder eddo ejoo eker erode eroded error jeer jeerer jereed jerk jerker jert jete jetted jetter joke joker joree jotter keek keeker keet keto kette kookeree kore korero odored okee oket order ordered orderer ortet otter otterer redd redder rede redeed redo redroot reed reeded reeder reek reeker reet rejerk reorder reree reroot retook retort retorted retorter retree retrot retted retter rode rodeo roed roer roke rokee roker rooker rooted rooter rote roter rotter tedder teer teerer teet teeter teeterer tekke teredo terek terete terret terreted terror tete tetrode tetter todder tode toed toetoe toke tooter tore tored torero tote toter totter totterer tree treed trek trekker tret trode troke troker trotter","dodd dodo dook door kodro koko koto odor oord otto rodd rood rook root roto rotor toko took tooroo toot toro torotoro tort toto trod troot trot","",""],
+["iwpeol","n","enoil enol enow epinine epiploon ileon illipene inion inone inopine ionone lene lennow leno leonine lien lienee liin line linen linie linin linn lino linolein linolenin linolin linon linpin lion lionel lipin lippen loin lone loon lown neele neep neon newel niello nine ninepin ninon nipple noel noil noll nolle nolo none nonene nonillion nonion noon noop nope nopinene nowel oenin oenolin olein onion onionpeel open opilionine opine opinion peen peine pelon penelopine penile penni pennill pennon peon pepino peppin pien pilin piline pillion pilon pine pinene pinion pinnel pino pinole pinolin pinon pinpillow pipeline pippin pleion plenipo pleon plowline pollen pone poon popeline poplin poppin pownie ween wene wienie wine winnel winnle winnow wippen wone woolen woon","elle elope epee epopee iiwi ipil leep leewill lile lill loll lollipop lollop loop lope oleo olio olpe peel peele peep peewee pell pellile people pepo pewee piewipe pile pili pililloo pill pillow pipe pipi plew plop plow poil pole polio poll polloi polo pool pooli poop pope poppel popple powwow weel weep weewow well wile will willie willow wipe wollop wool","plowline",""],
+["ocniex","s","cense cess cession cisco cise concession concise conciseness concision conenose cones conessine conics coniosis conscience consenescence consension consocies cooniness cosec cosession cosine cosiness coss cosse ecesic ecesis enscene ensconce ense eosin eosinic esconson esne essence essoin essoinee excess excise excision exes iciness incense incise incision inconscience inness inosic inosin inosinic inscience insee insense isoionone issei neese neossin nescience nese ness niceness nisei nisse noise noisiness nonconcession nones nonnescience nonoscine nonscience nonsecession nonsense nonsine noose nose nosine oisin oncosis oneness oons oscin oscine oscinine osone osse ossein scene scenic science scion scission scoinson sconce scone scoon secession secos seen seenie seesee seine seise sence sencion senecionine senesce senescence sense sension senso sess session sessions sice since sine sinnen sinsion sion sise sisi siss sissiness sissoo snee snoose soce socii soco sonic sons soon soso soss","ciconine cine cinene cion cnicin cocci cocco coco cocoon coenoecic coin cone coneen coneine conic coniceine conicine conin conine conn connex connexion cooee coon ennoic exocone exon icon iconic inion innocence inone ionic ionone neon nice niece nine ninon nixie nonce noncon none nonene nonic nonion nonoic noon oenin once oncin onion oxen oxonic xenon","excision","connexion"],
+["hgamen","o","aeon agnomen agog agoge agoho agon agone ahong ammo ammono among anagoge anemone ango annona anoa anon anonang eggnog enneagon eoan gammon genom genome genonema geonoma ghoom gnome gnomon goanna gogga goggan gogo gone gong gongman gonne gooma goon haoma hegemon hoga hogan homage home homo homogen homogene homogone hone hong hoon mahoe mahone mammogen mammon mamo mangeao mango mangona mano maomao megmho megohm memo mennom moan moggan mogo moha moho mome momme momo mona monaene mone mong mono monogene moon moonman neon noggen noma nome nonage nonagon nonane none nonego nonene noon ogam ogee ogham ohmage omao omega omen oogone","aenean agama agee agen agha aghanee agname ahem amaga amah amang ameen amen amene amma amman anam anama anan anana anhang anna egma emma enaena enage enam enema engage engem gaen gage gagee gagman gamahe game gamene gamma ganam gane gang ganga gangan gange ganggang gangman gean gegg geggee gemma gemmae gena gene ghee haem hageen hame hammam hange hangee hangman hanna heme hemen henna maam mage magma maha mamma mammee mana manage managee mane manege mang manga mange manna mannan mean menage meng mneme naam naga nagana nagman nagnag name nana nane nanga neem nema","",""],
+["lmcugi","a","aalii acca acclaim acicula aciculum acmic agal agalma agama agami agamic agla agua alala alga algal algalia algic algum alima alma almaciga almug alula alum alumic alumium amaga amala amalgam amamau amic amical amil amimia amla amli amma ammu amula amulla auca aula aulic aulu aumaga aumail aumil caam caama cacam cagmag caimacam calalu calcic calcium calculi caliga call calli calm camaca camail camilla caul caum cauma cicala cigala cigua cilia clag claggum claim clam clima cuculla culla cumal gala galagala galgal gali gall galla gallic gallium gamic gamma gaum gilia gimmal glacial glaga glam glaum glia glial gluma glumal guaiac guaiacum guama gugal guglia gula gumma icica ilia iliac ilial iliau ilima imam imamic lacca laccaic laic laical lall lama lamaic lamia lauia licca ligula lilac limma llama lucumia maam macuca macula magi magic magical magma mail maim mala malacia malagma mali malic mall mallum malm mamma mammal mammalgia mammilla mammula maul miamia miaul mica mila milla milligal mima mimical muga mulga mulla ulla ulua","cilium cull culm cumic cumuli gilim gill glug glum gugu gulgul gull ilicic ilium illium immi lill limmu limu lull lulu milium mill mimic mucic mucluc mugg mull mulmul ulmic ululu","",""],
+["plnoiy","s","illision inosin inspissosis isolysin isolysis isopoly lipolysis liposis lisp liss loss lysin lysis noisily noisy nonslip nonspill nonspiny nosy oisin oons opsonin opsy pilosis pinsons piso piss plosion poison poliosis polis pollinosis polos polyopsy polyposis poss posy psiloi psilosis pyosis sill sillily sillon silly silo silyl sinsion siol sion sippio sisi siss sissoo sissy slip slippy slipslop slon sloo sloop slop sloppily sloppy slops slopy slyly snip snippy snipy snoop snoopy snop soil soily soli solio solo solon sonly sonny sons sonsy sool sooloos soon soonly soppy soso soss spill spilly spin spiny spoil sponsion sponson spool spoon spoonily spoony synopsis synopsy","illy inion inly ipil liin lill lily linin linn lino linolin linon linpin liny lion lionly lipin lippy llyn loin loll lollipop lollop lollopy lolly loon loony loop loopy loppy ninny ninon nippily nippy noil noily noll nolo nonillion nonion nonly nonoily nonyl noon noop nylon oilily oily olio onion oniony only oolly opinion pili pililloo pilin pill pillion pilon pily pinion pinny pino pinolin pinon piny pinyl pinyon pipi pippin pippy pipy plop ploy poil polio poll polloi polo polony poly polyp polypi pony pool pooli pooly poon poop poplin poplolly poppin popply poppy pyin pylon yill yoop","spoonily",""],
+["drygou","e","dedo deed deedeed deedy deer deerdog degged degger degorge degree degu dere derry dodded dodder doddered dodderer doddery dodge dodger dodgery doer doge dogged dogger doggery doored doree dredge dredger dree dreg dreggy drogue drudge drudger drudgery druery drugger druggery dudder duddery dude duer dure dyer edder eddo eddy edge edged edger edgy egger eggy erode eroded error euge eyed eyer eyey eyre gedder gegg geggee gegger geggery geode godded gode goer gore gorer gorge gorged gorger gouge gouger gourde gree greed greedy grege grego grey groggery grudge grudger grudgery grue gryde gude gudge gurge guyer gyre odored ogee ogeed ogre order ordered orderer ordure orgue orrery oyer redd redder reddy rede redeed redeye redo redredge redry redue redye reed reeded reeder reedy regorge regrede regur regurge reorder reree reurge rode rodeo rodge roed roer roey roger rogue roguery roue rouge rudder rude rudge ruer rugged ryder udder uddered urde urdee uredo urge urger yede yegg yerd yere yore","dodd doddy dodgy dodo doggo doggy dogy door dory dour droud drug druggy dugdug duro durry gogo good goody gorry gory gourd gourdy grog groggy grugru gugu gurr gurry guru gyro odor oord ordu orgy rodd rood rory roud rougy rudd ruddy ruggy ruru youd your","","gourdy"],
+["rmjeoa","n","aenean aeon ameen amen amene amman ammono anam anama anan anana anear anemone anjan anna annona anoa anon arena arenae arna arnee aroon earn earner enaena enam enamor enarm enarme enema enorm eoan erne jajman jaman jane jann jean jenna majoon mammon mana mane manna mannan manner mano manor marmorean maroon marooner marrano marron mean meaner mejorana mennom merman mneme moan mona monaene mone moner moneran moneron mono monomer moon mooner moonja moonman moorman moorn moreen mormon morn morne moron naam name namer nana nane narr narra near neem neer nema neon neorama noma nome nonane none nonene noon norm norma oarman omen oner oreman orna rammerman rana rane rann reen reman rename renne roan rone roon","aero ajaja ajar amar amma ammer ammo amor amra arar arara ararao area arear armer armor armorer aroar aroma arrame arrear ejoo emeer emma emmer error jama jammer jara jarra jeer jeerer jerm joom joree maam majo major mamma mammee mammer mamo maomao marae marara mare maremma marjoram marm maro marree marrer memo mere mero mojarra mojo mome momme momo moor mora more mormaor mormo moro omao omer ormer raja ramarama rame rammer rare ream reamer reamerer rear rearer rearm reem remora reree roam roamer roar roarer roer romero room roomer","mejorana",""],
+["malpdi","r","admiral adradial adrip aimara airmail alar alarm amar amir amra apar arad araliad arapaima arar arara ardri aria arid aril armada armadilla armil armilla daira dairi dalar dammar dari darr diarial dird dirl drail dram drama dramm drill drip impair impar imparl irid iridal iridial lair laird lard lari larid lariid liar liard liparid lira malar malaria malarial mallard mammillar maral marara maria marid marl marli marm miliaria milliard mird mirid paar pair palar palliard palmar papillar para paralalia param paramimia pard pari parial parilla parma parpal parr pilar pillar pipiri piripiri pirl pirr praam prad pram prill prim prima primal primar primipara primipilar primp raad rada radar radial radialia radii raia raid rail ramada ramal ramarama rami ramp rapid rial riddam rill rima rimal rimpi ripa ripal riparial riprap","aalii adad adapid adda admi alada alala aldim alima alma almadia amala amapa amid amidid amil amimia amla amli amma apaid apii appall dada dadap dali dama damp dial diapalma dill dilli idalia ilia ilial ilima imam immi impala impall impalm impi implial ipid ipil laid lall lama lamia lamiid lamp lampad lill limma limp limpid lipa llama maam madam madid maid maiid mail maim mala malapi mali mall malm mamma mammal mammilla miamia mila mild mill milla milldam milliad milliamp milpa mima mimp paal pail paip palama palapalai pali palila palilalia pall palla palladia pallall palli pallial pallid palm palma palmad palp palpal palpi papa papal papilla pappi pial pilapil pili pill pilm pimp pipa pipal pipi plaid plap plim","","diapalma"],
+["sreixu","t","errite essexite ester estre estus etui eurite exert exist exister exit exite exitus exsert exter iritis iserite issite isuret iter iturite reest reester reet reit reiter reset resetter resist resister rest rester restes restir restis restitute restress resuit retest retexture retie retier retire retirer retree retrue retrust retter retuse reutter rist rite russet rust rustre ruttee rutter seit sert serut sestet sesti setier sett settee setter sext sextet sist sister site sittee sitter situs sixte sruti steer steerer stere steri stert stet stir stirrer stite stre stree street streets streite stress stresser stret strette stretti strit strix strue strut strutter stue sturt sturtite stuss stut stutter stutterer suet suist suit suite surette sussexite suttee suture teer teerer teest teet teeter teeterer terete tereu terret terrier terse tertius test teste testee tester testes testiere testis tete tetter tettix text texture tier tierer tire tirer tirr tirret tissue tite titer titi titre titter titterer tittie tree tress tressure trest tret trier trist trite true truer truss trusser trust trustee truster tsere tsetse turr turret turse tururi turus tusser tussis tussur tute tutee tutress tutrix tuts tutster tutti tutu ureter ureteritis urite urtite uster utees uteri uteritis uterus utter utterer","eerie esere exeresis exes iris issei issue issuer reese reis reissue reissuer reree rerise resee reseise reseiser resex resue reuse rier rise riser risser ruer ruru ruse seer seeress seesee seise sere series sess sier sire siress siris sirree sise sisi siss sixer suer sure sures susi susu susurr susurrus uresis urus usee user usure usurer usuress","",""],
+["nmtabs","o","abaton abbot aboma aboon absonant ambo ambon ambos ammo ammono anabo annatto annona anoa anon anotta anotto asonant assonant atmo atmos atom baboo baboon baboot bamboo baobab bason basos basso bassoon basto baston baton boast boat boatman boatsman boba bobo boma bomb bombast bombo bonbon boob boom boomboat boon boost boot boots bosn bosom boss boston bota bott bottom bottommost mambo mammon mamo manbot mannosan mano manostat manso manto maomao mason moan moat mobsman momo mona monas mono monont monsoon montana montant monton moon moonman moosa moost moot mootman moss most motmot mott motto nabob nanosoma naos nobs noma nomos nonnant nonnat nonsonant nontan noon notan oast oban omao onto oons oont otto sabbaton sabot sambo samson santon smoot snob snoot snot soam soma somata somma sonant sonata sons soon soot soso soss sots stamnos stanno stoa stoat stob stoma stomata stoon stoot stoss stosston stot taboo taboot tamanoas tambo tamboo tanoa tassoo tattoo toast toat toatoa toman tomato tomb tonant toom toon toot toss tost toston toto","abas abbas amaas amass amba amban amma amman amtman anabata anam anama anan anana ananas anba anna annat ansa anta asana assbaa assman asta ataman atma atman atta baba bamban banaba banana banat banns bant bantam bass bassan bast basta bataan batata batman bats batsman batt batta maam mamba mamma mana manas manna mannan mant manta masa mass massa mast mastaba mastman matamata matta naam nabs nana nant nasab nast natant sabbat saman samba sans sant sasa sasan sass satan snab staab stab stam statant tamas tana tanan tass tatsman tatta tsamba tsantsa","boatsman","batsman"]
+    ];
 
-    let currentPuzzle = null;
-    let currentInput = '';
-    let foundWords = [];
-    let score = 0;
-    let messageTimeout = null;
+    var PUZZLES = RAW.map(function(p) {
+        return {
+            letters: p[0].split(""),
+            center: p[1],
+            bee: p[2].split(" "),
+            glass: p[3].split(" "),
+            beePangrams: p[4] ? p[4].split(" ") : [],
+            glassPangrams: p[5] ? p[5].split(" ") : []
+        };
+    });
+
+    var puzzle = null;
+    var puzzleIndex = 0;
+    var mode = 'bee';
+    var input = '';
+    var beeFound = [];
+    var glassFound = [];
+    var beeScore = 0;
+    var glassScore = 0;
+    var msgTimeout = null;
+    var transitioning = false;
+    var activeFoundTab = 'bee';
 
     function init() {
-        // Pick puzzle based on date (daily puzzle)
-        const today = new Date();
-        const dayIndex = (today.getFullYear() * 366 + today.getMonth() * 31 + today.getDate()) % PUZZLES.length;
-        loadPuzzle(dayIndex);
+        var d = new Date();
+        puzzleIndex = (d.getFullYear() * 366 + d.getMonth() * 31 + d.getDate()) % PUZZLES.length;
+        loadPuzzle(puzzleIndex);
         setupKeyboard();
         setupButtons();
     }
 
     function loadPuzzle(index) {
-        currentPuzzle = PUZZLES[index];
-        currentInput = '';
-        foundWords = [];
-        score = 0;
-        updateDisplay();
+        puzzleIndex = index;
+        puzzle = PUZZLES[index];
+        input = '';
+        beeFound = [];
+        glassFound = [];
+        beeScore = 0;
+        glassScore = 0;
+
+        var saved = loadProgress(index);
+        if (saved) {
+            beeFound = saved.bf || [];
+            glassFound = saved.gf || [];
+            beeScore = saved.bs || 0;
+            glassScore = saved.gs || 0;
+        }
+
+        mode = 'bee';
+        document.body.classList.remove('glass-mode');
+        activeFoundTab = 'bee';
+        document.getElementById('found-tab-bee').classList.add('active');
+        document.getElementById('found-tab-glass').classList.remove('active');
+        document.getElementById('found-words-bee').classList.remove('hidden');
+        document.getElementById('found-words-glass').classList.add('hidden');
+        updateAll();
         renderHoneycomb();
-        renderFoundWords();
+    }
+
+    function updateAll() {
+        updateDisplay();
         updateScore();
         updateProgress();
+        updateTabs();
+        renderFoundWords();
+        renderMirror();
         showMessage('');
     }
 
     function renderHoneycomb() {
-        const container = document.getElementById('honeycomb');
-        const letters = [...currentPuzzle.letters];
-        const center = currentPuzzle.center;
-
-        // Shuffle outer letters for display
+        var container = document.getElementById('honeycomb');
+        var letters = puzzle.letters.slice();
         shuffleArray(letters);
-
         container.innerHTML = '';
-
-        // Row 1: 2 letters
-        const row1 = document.createElement('div');
-        row1.className = 'hex-row';
-        row1.appendChild(createHex(letters[0]));
-        row1.appendChild(createHex(letters[1]));
-        container.appendChild(row1);
-
-        // Row 2: 3 letters (center is forbidden)
-        const row2 = document.createElement('div');
-        row2.className = 'hex-row';
-        row2.appendChild(createHex(letters[2]));
-        row2.appendChild(createHex(center, true));
-        row2.appendChild(createHex(letters[3]));
-        container.appendChild(row2);
-
-        // Row 3: 2 letters
-        const row3 = document.createElement('div');
-        row3.className = 'hex-row';
-        row3.appendChild(createHex(letters[4]));
-        row3.appendChild(createHex(letters[5]));
-        container.appendChild(row3);
+        var rows = [[letters[0], letters[1]], [letters[2], null, letters[3]], [letters[4], letters[5]]];
+        for (var r = 0; r < rows.length; r++) {
+            var rowEl = document.createElement('div');
+            rowEl.className = 'hex-row';
+            for (var c = 0; c < rows[r].length; c++) {
+                var letter = rows[r][c];
+                if (letter === null) {
+                    rowEl.appendChild(createHex(puzzle.center, true));
+                } else {
+                    rowEl.appendChild(createHex(letter, false));
+                }
+            }
+            container.appendChild(rowEl);
+        }
     }
 
     function createHex(letter, isCenter) {
-        const el = document.createElement('div');
+        var el = document.createElement('div');
         el.className = 'hex' + (isCenter ? ' center' : '');
         el.textContent = letter;
-        el.addEventListener('click', function() {
-            addLetter(letter);
-        });
+        el.addEventListener('click', function() { addLetter(letter); });
         return el;
     }
 
     function addLetter(letter) {
-        currentInput += letter;
+        input += letter;
         updateDisplay();
+        if (navigator.vibrate) navigator.vibrate(10);
     }
 
     function deleteLetter() {
-        currentInput = currentInput.slice(0, -1);
+        input = input.slice(0, -1);
         updateDisplay();
     }
 
     function updateDisplay() {
-        const display = document.getElementById('input');
-        const outerSet = new Set(currentPuzzle.letters);
-
-        let html = '';
-        for (const ch of currentInput) {
-            if (ch === currentPuzzle.center) {
-                html += '<span class="letter forbidden-letter">' + ch + '</span>';
+        var display = document.getElementById('input');
+        var html = '';
+        for (var i = 0; i < input.length; i++) {
+            var ch = input[i];
+            if (ch === puzzle.center) {
+                html += '<span class="letter ' + (mode === 'bee' ? 'required' : 'forbidden') + '">' + ch + '</span>';
             } else {
                 html += '<span class="letter">' + ch + '</span>';
             }
@@ -508,8 +761,8 @@
     }
 
     function submitWord() {
-        const word = currentInput.toLowerCase();
-        currentInput = '';
+        var word = input.toLowerCase();
+        input = '';
 
         if (word.length < 4) {
             showMessage('Too short', 'error');
@@ -517,64 +770,50 @@
             return;
         }
 
-        // Check for forbidden letter
-        if (word.includes(currentPuzzle.center)) {
-            showMessage('Contains forbidden letter!', 'error');
-            updateDisplay();
-            return;
-        }
+        var hasCenter = word.indexOf(puzzle.center) !== -1;
+        var validSet = {};
+        for (var i = 0; i < puzzle.letters.length; i++) validSet[puzzle.letters[i]] = true;
+        validSet[puzzle.center] = true;
 
-        // Check only uses valid letters
-        const outerSet = new Set(currentPuzzle.letters);
-        for (const ch of word) {
-            if (!outerSet.has(ch)) {
+        for (var i = 0; i < word.length; i++) {
+            if (!validSet[word[i]]) {
                 showMessage('Letter not in puzzle', 'error');
                 updateDisplay();
                 return;
             }
         }
 
-        // Already found?
-        if (foundWords.includes(word)) {
-            showMessage('Already found', 'error');
-            updateDisplay();
-            return;
-        }
-
-        // Valid answer?
-        if (!currentPuzzle.answers.includes(word)) {
-            showMessage('Not in word list', 'error');
-            updateDisplay();
-            return;
-        }
-
-        // Success!
-        foundWords.push(word);
-        const isPangram = currentPuzzle.pangrams.includes(word);
-        const points = word.length === 4 ? 1 : word.length;
-        const bonus = isPangram ? 7 : 0;
-        score += points + bonus;
-
-        if (isPangram) {
-            showMessage('PANGRAM! +' + (points + bonus), 'pangram');
+        if (mode === 'bee') {
+            if (!hasCenter) { showMessage('Must use center letter!', 'error'); updateDisplay(); return; }
+            if (beeFound.indexOf(word) !== -1) { showMessage('Already found', 'error'); updateDisplay(); return; }
+            if (puzzle.bee.indexOf(word) === -1) { showMessage('Not in word list', 'error'); updateDisplay(); return; }
+            beeFound.push(word);
+            var pg = puzzle.beePangrams.indexOf(word) !== -1;
+            var pts = word.length === 4 ? 1 : word.length;
+            beeScore += pts + (pg ? 7 : 0);
+            showMessage(pg ? 'PANGRAM! +' + (pts + 7) : '+' + pts, pg ? 'pangram' : 'success');
         } else {
-            showMessage('+' + points, 'success');
+            if (hasCenter) { showMessage('Contains forbidden letter!', 'error'); updateDisplay(); return; }
+            if (glassFound.indexOf(word) !== -1) { showMessage('Already found', 'error'); updateDisplay(); return; }
+            if (puzzle.glass.indexOf(word) === -1) { showMessage('Not in word list', 'error'); updateDisplay(); return; }
+            glassFound.push(word);
+            var pg = puzzle.glassPangrams.indexOf(word) !== -1;
+            var pts = word.length === 4 ? 1 : word.length;
+            glassScore += pts + (pg ? 7 : 0);
+            showMessage(pg ? 'PANGRAM! +' + (pts + 7) : '+' + pts, pg ? 'pangram' : 'success');
         }
 
-        updateScore();
-        updateProgress();
-        renderFoundWords();
-        updateDisplay();
+        saveProgress();
+        updateAll();
     }
 
     function showMessage(text, type) {
-        const el = document.getElementById('message');
+        var el = document.getElementById('message');
         el.textContent = text || '\u00a0';
         el.className = 'message' + (type ? ' ' + type : '');
-
-        if (messageTimeout) clearTimeout(messageTimeout);
+        if (msgTimeout) clearTimeout(msgTimeout);
         if (text) {
-            messageTimeout = setTimeout(function() {
+            msgTimeout = setTimeout(function() {
                 el.textContent = '\u00a0';
                 el.className = 'message';
             }, 2000);
@@ -582,62 +821,180 @@
     }
 
     function updateScore() {
-        document.getElementById('score').textContent = score;
+        document.getElementById('score').textContent = beeScore + glassScore;
     }
 
     function updateProgress() {
-        const found = foundWords.length;
-        const total = currentPuzzle.answers.length;
-        const pct = total > 0 ? (found / total * 100) : 0;
-        document.getElementById('progress').style.width = pct + '%';
-        document.getElementById('found-label').textContent = found + ' found';
-        document.getElementById('total-label').textContent = total + ' words';
+        var bt = puzzle.bee.length, gt = puzzle.glass.length;
+        document.getElementById('bee-progress').style.width = (bt ? beeFound.length / bt * 100 : 0) + '%';
+        document.getElementById('glass-progress').style.width = (gt ? glassFound.length / gt * 100 : 0) + '%';
+        document.getElementById('bee-found-label').textContent = beeFound.length;
+        document.getElementById('bee-total-label').textContent = bt;
+        document.getElementById('glass-found-label').textContent = glassFound.length;
+        document.getElementById('glass-total-label').textContent = gt;
+    }
+
+    function updateTabs() {
+        document.getElementById('tab-bee').className = 'mode-tab' + (mode === 'bee' ? ' active' : '');
+        document.getElementById('tab-glass').className = 'mode-tab' + (mode === 'glass' ? ' active' : '');
+        document.getElementById('bee-tab-count').textContent = beeFound.length + '/' + puzzle.bee.length;
+        document.getElementById('glass-tab-count').textContent = glassFound.length + '/' + puzzle.glass.length;
+    }
+
+    function switchMode(newMode) {
+        if (newMode === mode || transitioning) return;
+        transitioning = true;
+
+        var hex = document.querySelector('.hex.center');
+        var rect = hex.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+
+        var corners = [[0,0],[window.innerWidth,0],[0,window.innerHeight],[window.innerWidth,window.innerHeight]];
+        var maxDist = 0;
+        for (var i = 0; i < corners.length; i++) {
+            var dx = corners[i][0] - cx, dy = corners[i][1] - cy;
+            var d = Math.sqrt(dx*dx + dy*dy);
+            if (d > maxDist) maxDist = d;
+        }
+        var size = maxDist * 2 + 100;
+
+        var portal = document.getElementById('portal');
+        portal.style.width = size + 'px';
+        portal.style.height = size + 'px';
+        portal.style.left = (cx - size/2) + 'px';
+        portal.style.top = (cy - size/2) + 'px';
+        portal.style.background = newMode === 'glass' ? '#0c0c14' : '#faf8f5';
+
+        hex.classList.add('flipping');
+        portal.classList.add('expanding');
+
+        if (navigator.vibrate) navigator.vibrate([20, 50, 30]);
+
+        setTimeout(function() {
+            mode = newMode;
+            if (mode === 'glass') {
+                document.body.classList.add('glass-mode');
+            } else {
+                document.body.classList.remove('glass-mode');
+            }
+            showFoundList(mode);
+            updateAll();
+        }, 350);
+
+        setTimeout(function() {
+            portal.classList.remove('expanding');
+            hex.classList.remove('flipping');
+            transitioning = false;
+        }, 750);
+    }
+
+    function showFoundList(which) {
+        activeFoundTab = which;
+        var bee = document.getElementById('found-words-bee');
+        var glass = document.getElementById('found-words-glass');
+        var tabBee = document.getElementById('found-tab-bee');
+        var tabGlass = document.getElementById('found-tab-glass');
+        if (which === 'bee') {
+            bee.classList.remove('hidden'); glass.classList.add('hidden');
+            tabBee.classList.add('active'); tabGlass.classList.remove('active');
+        } else {
+            bee.classList.add('hidden'); glass.classList.remove('hidden');
+            tabBee.classList.remove('active'); tabGlass.classList.add('active');
+        }
+        renderMirror();
     }
 
     function renderFoundWords() {
-        const container = document.getElementById('found-words');
-        const sorted = [...foundWords].sort();
-        container.innerHTML = sorted.map(function(w) {
-            const isPangram = currentPuzzle.pangrams.includes(w);
-            return '<span class="found-word' + (isPangram ? ' pangram' : '') + '">' + w + '</span>';
+        renderWordList('found-words-bee', beeFound, puzzle.beePangrams);
+        renderWordList('found-words-glass', glassFound, puzzle.glassPangrams);
+    }
+
+    function renderWordList(id, words, pangrams) {
+        var el = document.getElementById(id);
+        var sorted = words.slice().sort();
+        el.innerHTML = sorted.map(function(w) {
+            var pg = pangrams.indexOf(w) !== -1;
+            return '<span class="found-word' + (pg ? ' pangram' : '') + '">' + w + '</span>';
         }).join('');
-        document.getElementById('found-count').textContent = foundWords.length ? foundWords.length + '/' + currentPuzzle.answers.length : '';
+    }
+
+    function renderMirror() {
+        var container = document.getElementById('mirror-words');
+        var section = document.getElementById('mirror-section');
+        var label = document.getElementById('mirror-label');
+        var other = activeFoundTab === 'bee' ? glassFound : beeFound;
+        var otherName = activeFoundTab === 'bee' ? 'through the glass' : 'back through the glass';
+
+        if (other.length === 0) { section.style.display = 'none'; return; }
+
+        section.style.display = 'block';
+        label.textContent = otherName;
+        var sorted = other.slice().sort();
+        container.innerHTML = sorted.map(function(w) {
+            return '<span class="mirror-word">' + w + '</span>';
+        }).join('');
+    }
+
+    function shareResults() {
+        var t = beeScore + glassScore;
+        var text = '\ud83e\ude9e Looking Glass #' + (puzzleIndex + 1) + '\n';
+        text += '\ud83d\udc1d ' + beeFound.length + '/' + puzzle.bee.length + ' (' + beeScore + ' pts)\n';
+        text += '\ud83e\ude9e ' + glassFound.length + '/' + puzzle.glass.length + ' (' + glassScore + ' pts)\n';
+        text += 'Total: ' + t + ' pts\n';
+        text += 'germpharm.github.io/anti-bee/';
+        if (navigator.share) {
+            navigator.share({ text: text });
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+                showMessage('Copied to clipboard!', 'success');
+            });
+        }
     }
 
     function shuffleArray(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
+        for (var i = arr.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = arr[i]; arr[i] = arr[j]; arr[j] = temp;
         }
     }
 
     function setupKeyboard() {
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                submitWord();
-            } else if (e.key === 'Backspace') {
-                e.preventDefault();
-                deleteLetter();
-            } else if (/^[a-zA-Z]$/.test(e.key)) {
-                addLetter(e.key.toLowerCase());
-            }
+            if (transitioning) return;
+            if (e.key === 'Enter') { e.preventDefault(); submitWord(); }
+            else if (e.key === 'Backspace') { e.preventDefault(); deleteLetter(); }
+            else if (/^[a-zA-Z]$/.test(e.key)) { addLetter(e.key.toLowerCase()); }
         });
     }
 
     function setupButtons() {
         document.getElementById('enter-btn').addEventListener('click', submitWord);
         document.getElementById('delete-btn').addEventListener('click', deleteLetter);
-        document.getElementById('shuffle-btn').addEventListener('click', function() {
-            renderHoneycomb();
-        });
+        document.getElementById('shuffle-btn').addEventListener('click', renderHoneycomb);
         document.getElementById('new-puzzle-btn').addEventListener('click', function() {
-            const index = Math.floor(Math.random() * PUZZLES.length);
+            var index = Math.floor(Math.random() * PUZZLES.length);
             loadPuzzle(index);
         });
         document.getElementById('rules-toggle').addEventListener('click', function() {
             document.getElementById('rules').classList.toggle('open');
         });
+    }
+
+    function saveProgress() {
+        try {
+            localStorage.setItem('lg_' + puzzleIndex, JSON.stringify({
+                bf: beeFound, gf: glassFound, bs: beeScore, gs: glassScore
+            }));
+        } catch(e) {}
+    }
+
+    function loadProgress(index) {
+        try {
+            var d = localStorage.getItem('lg_' + index);
+            if (d) return JSON.parse(d);
+        } catch(e) {}
+        return null;
     }
 
     init();
